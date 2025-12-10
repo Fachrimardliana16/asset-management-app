@@ -1,0 +1,17 @@
+# Docker
+/docker/mysql/data/
+*.log
+
+# Environment
+.env
+
+# Vendor
+/vendor/
+/node_modules/
+
+# Laravel
+/storage/*.key
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/logs/*
