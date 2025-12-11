@@ -104,7 +104,10 @@ class AssetResource extends Resource
                         Forms\Components\Textarea::make('desc')
                             ->columnSpanFull(),
                         Forms\Components\FileUpload::make('img')
-                            ->directory('Assets')
+                            ->directory('assets')
+                            ->image()
+                            ->disk('public')
+                            ->visibility('public')
                             ->label('Gambar'),
                         Forms\Components\Hidden::make('users_id')
                             ->default(auth()->id()),

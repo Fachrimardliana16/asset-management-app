@@ -190,7 +190,8 @@ class AssetMutationResource extends Resource
                         Forms\Components\Section::make('Dokumen & Keterangan')
                             ->schema([
                                 Forms\Components\FileUpload::make('scan_doc')
-                                    ->directory('Mutation Assets')
+                                    ->directory('mutation-assets')
+                                    ->disk('public')
                                     ->label('Scan Dokumen/Berita Acara')
                                     ->acceptedFileTypes(['application/pdf', 'image/*'])
                                     ->helperText('Upload dokumen berita acara mutasi (PDF/Gambar)'),

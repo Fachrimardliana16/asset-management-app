@@ -112,7 +112,8 @@ class AssetDisposalResource extends Resource
                         Forms\Components\Section::make('Dokumen Pendukung')
                             ->schema([
                                 Forms\Components\FileUpload::make('docs')
-                                    ->directory('Disposals')
+                                    ->directory('disposals')
+                                    ->disk('public')
                                     ->label('Lampiran SK/Berita Acara')
                                     ->acceptedFileTypes(['application/pdf', 'image/*'])
                                     ->helperText('Upload surat keputusan atau berita acara penghapusan'),
