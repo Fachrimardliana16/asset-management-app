@@ -7,7 +7,7 @@
     <title>Print Stiker Aset - {{ $asset->assets_number }}</title>
     <style>
         @page {
-            size: 120mm 40mm;
+            size: 100mm 40mm;
             margin: 0;
         }
 
@@ -36,7 +36,7 @@
         }
 
         .sticker {
-            width: 120mm;
+            width: 100mm;
             height: 38mm;
             max-height: 38mm;
             background: white;
@@ -49,8 +49,8 @@
 
         /* KOLOM LOGO */
         .logo-column {
-            width: 26mm;
-            min-width: 26mm;
+            width: 22mm;
+            min-width: 22mm;
             height: 38mm;
             max-height: 38mm;
             background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
@@ -68,8 +68,8 @@
         }
 
         .logo-container {
-            width: 15mm;
-            height: 15mm;
+            width: 13mm;
+            height: 13mm;
             background: white !important;
             border-radius: 50%;
             display: flex;
@@ -81,7 +81,7 @@
         }
 
         .logo-container img {
-            width: 12mm;
+            width: 10mm;
             height: auto;
         }
 
@@ -97,7 +97,7 @@
         /* KONTEN UTAMA */
         .content-column {
             flex: 1;
-            padding: 2mm;
+            padding: 1.5mm 2mm;
             display: flex;
             flex-direction: column;
             height: 38mm;
@@ -113,13 +113,13 @@
         }
 
         .company-name {
-            font-size: 8pt;
+            font-size: 7.5pt;
             font-weight: bold;
             color: #1e40af !important;
         }
 
         .company-subtitle {
-            font-size: 5.5pt;
+            font-size: 5pt;
             color: #666;
         }
 
@@ -133,22 +133,23 @@
 
         .info-section {
             flex: 1;
-            overflow: hidden;
+            overflow: visible;
+            min-width: 0;
         }
 
         .asset-number {
             font-size: 10pt;
             font-weight: bold;
             color: #1e3a8a !important;
-            margin-bottom: 0.5mm;
-            letter-spacing: 0.5px;
+            margin-bottom: 0.8mm;
+            letter-spacing: 0.3px;
         }
 
         .asset-name {
             font-size: 7pt;
             color: #222;
             line-height: 1.25;
-            margin-bottom: 1.5mm;
+            margin-bottom: 1.2mm;
             font-weight: 500;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -157,17 +158,19 @@
 
         .asset-meta {
             display: flex;
-            gap: 2mm;
-            flex-wrap: nowrap;
+            gap: 1.5mm;
+            flex-wrap: wrap;
+            align-items: center;
         }
 
         .asset-category,
         .asset-brand {
-            font-size: 5pt;
+            font-size: 6pt;
             padding: 0.8mm 2.5mm;
             border-radius: 2mm;
             font-weight: 500;
             white-space: nowrap;
+            line-height: 1.2;
         }
 
         .asset-category {
@@ -186,18 +189,32 @@
             print-color-adjust: exact !important;
         }
 
+        .asset-year {
+            font-size: 6pt;
+            padding: 0.8mm 2.5mm;
+            border-radius: 2mm;
+            font-weight: 500;
+            white-space: nowrap;
+            line-height: 1.2;
+            background: #fef3c7 !important;
+            background-color: #fef3c7 !important;
+            color: #92400e !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
         /* QR CODE — INI YANG PALING PENTING */
         .qr-section {
             flex-shrink: 0;
-            width: 24mm;
-            min-width: 24mm;
+            width: 22mm;
+            min-width: 22mm;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             border-left: 0.5px solid #e5e7eb;
-            padding: 1mm;
-            overflow: hidden;
+            padding: 3mm 1mm 1mm 1mm;
+            overflow: visible;
         }
 
         .qr-code {
@@ -208,6 +225,9 @@
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
+            overflow: visible;
+            margin: 0;
+            padding: 0;
         }
 
         /* Support untuk QR code dalam format div/table dari DNS2D */
@@ -215,6 +235,10 @@
         .qr-code table {
             display: block !important;
             visibility: visible !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 18mm !important;
+            height: 18mm !important;
         }
 
         .qr-code svg {
@@ -224,14 +248,17 @@
             max-height: 18mm !important;
             display: block !important;
             visibility: visible !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
 
         .qr-label {
             font-size: 4pt;
             color: #555;
-            margin-top: 1mm;
+            margin-top: 2mm;
             text-align: center;
             line-height: 1.1;
+            flex-shrink: 0;
         }
 
         .no-print {
@@ -252,7 +279,7 @@
         /* PRINT STYLES */
         @media print {
             html, body {
-                width: 120mm;
+                width: 100mm;
                 height: 38mm;
                 max-height: 38mm;
                 margin: 0;
@@ -266,14 +293,14 @@
             }
 
             #print-area {
-                width: 120mm;
+                width: 100mm;
                 height: 38mm;
                 max-height: 38mm;
                 overflow: hidden;
             }
 
             .sticker {
-                width: 120mm;
+                width: 100mm;
                 height: 38mm;
                 max-height: 38mm;
                 border: none;
@@ -318,6 +345,13 @@
                 print-color-adjust: exact !important;
             }
 
+            .asset-year {
+                background: #fef3c7 !important;
+                background-color: #fef3c7 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
             /* QR Code harus tetap visible saat print */
             .qr-code,
             .qr-code * {
@@ -339,7 +373,7 @@
     <div class="no-print">
         <h2>Preview Stiker Aset — {{ $asset->assets_number }}</h2>
         <button class="btn-print" onclick="window.print()">Print Stiker (Ctrl + P)</button>
-        <p style="margin-top:10px; color:#666;">Ukuran: 120 × 40 mm</p>
+        <p style="margin-top:10px; color:#666;">Ukuran: 100 × 40 mm</p>
     </div>
 
     <div id="print-area">
@@ -373,6 +407,9 @@
                             <span class="asset-category">{{ $asset->categoryAsset->name ?? 'Umum' }}</span>
                             @if($asset->brand)
                             <span class="asset-brand">{{ $asset->brand }}</span>
+                            @endif
+                            @if($asset->purchase_date)
+                            <span class="asset-year">Tahun {{ $asset->purchase_date->format('Y') }}</span>
                             @endif
                         </div>
                     </div>
