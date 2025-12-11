@@ -559,6 +559,19 @@ class AssetResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('print_labels')
+                        ->label('Print Label Massal')
+                        ->icon('heroicon-o-printer')
+                        ->color('info')
+                        ->action(function ($records) {
+                            $ids = $records->pluck('id')->toArray();
+                            $url = route('asset.print-barcode-bulk', ['ids' => implode(',', $ids)]);
+                            
+                            // Open in new tab
+                            return redirect()->to($url);
+                        })
+                        ->deselectRecordsAfterCompletion()
+                        ->requiresConfirmation(false),
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
