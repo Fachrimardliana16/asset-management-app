@@ -287,6 +287,7 @@ class AssetPurchaseResource extends Resource
                                         Forms\Components\FileUpload::make('img')
                                             ->label('Foto Aset')
                                             ->directory('assets')
+                                            ->disk('public')
                                             ->image()
                                             ->imageEditor()
                                             ->maxSize(5120)
