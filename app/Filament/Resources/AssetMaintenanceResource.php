@@ -87,7 +87,8 @@ class AssetMaintenanceResource extends Resource
                             ->schema([
                                 Forms\Components\FileUpload::make('invoice_file')
                                     ->label('Bukti/Struk/Invoice')
-                                    ->directory('Maintenance')
+                                    ->directory('maintenance')
+                                    ->disk('public')
                                     ->acceptedFileTypes(['application/pdf', 'image/*'])
                                     ->helperText('Upload struk atau invoice perbaikan'),
                             ])->collapsible(),

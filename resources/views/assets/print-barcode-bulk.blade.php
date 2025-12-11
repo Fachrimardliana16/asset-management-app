@@ -4,11 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Print Stiker Aset - {{ $asset->assets_number }}</title>
+    <title>Print Stiker Aset Massal - {{ $assets->count() }} Aset</title>
     <style>
         @page {
-            size: 100mm 40mm;
-            margin: 0;
+            size: A4;
+            margin: 5mm;
         }
 
         * {
@@ -28,31 +28,63 @@
         body {
             font-family: Arial, sans-serif;
             background: #f8f9fa;
-            padding: 20px 10px;
+            padding: 20px;
         }
 
         #print-area {
-            display: block;
+            display: grid;
+            grid-template-columns: repeat(2, 100mm);
+            gap: 2mm;
+            justify-content: center;
+            max-width: 210mm;
+            margin: 0 auto;
         }
 
         .sticker {
             width: 100mm;
-            height: 38mm;
-            max-height: 38mm;
+            height: 40mm;
             background: white;
             display: flex;
             overflow: hidden;
-            margin: 0 auto 30px auto;
-            border: 1px solid #ddd;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border: none;
+            page-break-inside: avoid;
+            position: relative;
+        }
+
+        /* Garis putus-putus vertikal di tengah antar kolom */
+        .sticker:nth-child(odd)::after {
+            content: '';
+            position: absolute;
+            right: -1mm;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            border-right: 1px dashed #999;
+        }
+
+        /* Garis putus-putus horizontal di bawah setiap baris kecuali baris terakhir */
+        .sticker:nth-child(2n)::after {
+            content: '';
+            position: absolute;
+            left: -101mm;
+            bottom: -1mm;
+            width: 202mm;
+            height: 1px;
+            border-bottom: 1px dashed #999;
+        }
+
+        /* Hilangkan garis bawah untuk 2 label terakhir di halaman */
+        .sticker:nth-child(14n)::after,
+        .sticker:nth-child(14n-1)::after {
+            border-bottom: none;
         }
 
         /* KOLOM LOGO */
         .logo-column {
             width: 22mm;
             min-width: 22mm;
-            height: 38mm;
-            max-height: 38mm;
+            height: 40mm;
+            max-height: 40mm;
             background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
             background-color: #1e40af !important;
             color: white;
@@ -100,8 +132,8 @@
             padding: 1.5mm 2mm;
             display: flex;
             flex-direction: column;
-            height: 38mm;
-            max-height: 38mm;
+            height: 40mm;
+            max-height: 40mm;
             overflow: hidden;
         }
 
@@ -203,7 +235,7 @@
             print-color-adjust: exact !important;
         }
 
-        /* QR CODE — INI YANG PALING PENTING */
+        /* QR CODE */
         .qr-section {
             flex-shrink: 0;
             width: 22mm;
@@ -230,7 +262,6 @@
             padding: 0;
         }
 
-        /* Support untuk QR code dalam format div/table dari DNS2D */
         .qr-code div,
         .qr-code table {
             display: block !important;
@@ -276,59 +307,89 @@
             cursor: pointer;
         }
 
+        .btn-print:hover {
+            background: #1e3a8a;
+        }
+
         /* PRINT STYLES */
         @media print {
             html, body {
-                width: 100mm;
-                height: 38mm;
-                max-height: 38mm;
+                width: 210mm;
                 margin: 0;
                 padding: 0;
                 background: white !important;
-                overflow: hidden;
             }
 
             body {
-                padding: 0;
+                padding: 5mm;
             }
 
             #print-area {
-                width: 100mm;
-                height: 38mm;
-                max-height: 38mm;
-                overflow: hidden;
+                display: grid;
+                grid-template-columns: repeat(2, 100mm);
+                gap: 2mm;
+                justify-content: center;
             }
 
             .sticker {
                 width: 100mm;
-                height: 38mm;
-                max-height: 38mm;
+                height: 40mm;
                 border: none;
-                box-shadow: none;
                 margin: 0;
-                page-break-after: avoid;
                 page-break-inside: avoid;
                 overflow: hidden;
+            }
+
+            /* Garis putus-putus vertikal di tengah antar kolom saat print */
+            .sticker:nth-child(odd)::after {
+                content: '';
+                position: absolute;
+                right: -1mm;
+                top: 0;
+                bottom: 0;
+                width: 1px;
+                border-right: 1px dashed #999;
+            }
+
+            /* Garis putus-putus horizontal di bawah setiap baris */
+            .sticker:nth-child(2n)::after {
+                content: '';
+                position: absolute;
+                left: -101mm;
+                bottom: -1mm;
+                width: 202mm;
+                height: 1px;
+                border-bottom: 1px dashed #999;
+            }
+
+            /* Hilangkan garis bawah untuk 2 label terakhir di halaman */
+            .sticker:nth-child(14n)::after,
+            .sticker:nth-child(14n-1)::after {
+                border-bottom: none;
+            }
+
+            /* Setiap 14 label (2x7) pindah halaman */
+            .sticker:nth-child(14n) {
+                page-break-after: always;
             }
 
             .no-print {
                 display: none !important;
             }
 
-            /* Force background colors to print */
             .logo-column {
                 background: #1e40af !important;
                 background-color: #1e40af !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 color-adjust: exact !important;
-                height: 38mm;
-                max-height: 38mm;
+                height: 40mm;
+                max-height: 40mm;
             }
 
             .content-column {
-                height: 38mm;
-                max-height: 38mm;
+                height: 40mm;
+                max-height: 40mm;
             }
 
             .asset-category {
@@ -352,7 +413,6 @@
                 print-color-adjust: exact !important;
             }
 
-            /* QR Code harus tetap visible saat print */
             .qr-code,
             .qr-code * {
                 display: block !important;
@@ -371,12 +431,17 @@
 <body>
 
     <div class="no-print">
-        <h2>Preview Stiker Aset — {{ $asset->assets_number }}</h2>
-        <button class="btn-print" onclick="window.print()">Print Stiker (Ctrl + P)</button>
-        <p style="margin-top:10px; color:#666;">Ukuran: 100 × 40 mm</p>
+        <h2>Preview Stiker Aset Massal — {{ $assets->count() }} Aset</h2>
+        <button class="btn-print" onclick="window.print()">Print Semua Stiker (Ctrl + P)</button>
+        <p style="margin-top:10px; color:#666;">
+            Ukuran Label: 100 × 40 mm | Kertas: A4<br>
+            Total: {{ $assets->count() }} label | Halaman: {{ ceil($assets->count() / 14) }} lembar<br>
+            Layout: 2 kolom × 7 baris per halaman (14 label/halaman)
+        </p>
     </div>
 
     <div id="print-area">
+        @foreach($assets as $asset)
         <div class="sticker">
             <!-- LOGO -->
             <div class="logo-column">
@@ -424,23 +489,9 @@
                 </div>
             </div>
         </div>
+        @endforeach
     </div>
 
-    <script>
-        function printBarcodes() {
-            const copies = parseInt(document.getElementById('copies')?.value) || 1;
-            const area = document.getElementById('print-area');
-            const sticker = area.innerHTML;
-
-            if (copies > 1) {
-                area.innerHTML = sticker.repeat(copies);
-            }
-            window.print();
-            if (copies > 1) {
-                area.innerHTML = sticker;
-            }
-        }
-    </script>
 </body>
 
 </html>

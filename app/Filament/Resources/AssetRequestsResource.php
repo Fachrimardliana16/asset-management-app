@@ -182,6 +182,7 @@ class AssetRequestsResource extends Resource
                         Forms\Components\FileUpload::make('docs')
                             ->label('Bukti Lampiran')
                             ->directory('bukti-permintaan')
+                            ->disk('public')
                             ->image()
                             ->imageEditor()
                             ->imageEditorAspectRatios([
