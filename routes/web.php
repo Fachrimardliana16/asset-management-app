@@ -23,6 +23,10 @@ Route::middleware(['auth'])->group(function () {
     // Print barcode/QR stiker
     Route::get('/asset/{id}/print-barcode', [AssetBarcodeController::class, 'printBarcode'])
         ->name('asset.print-barcode');
+    
+    // Print barcode massal
+    Route::get('/asset/print-barcode-bulk', [AssetBarcodeController::class, 'printBarcodeBulk'])
+        ->name('asset.print-barcode-bulk');
 
     // Export PDF Routes
     Route::get('/export/asset-requests', [ExportPdfController::class, 'assetRequests'])

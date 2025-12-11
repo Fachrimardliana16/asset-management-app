@@ -15,6 +15,32 @@ class AssetBarcodeController extends Controller
     }
 
     /**
+     * Print multiple barcodes/labels at once
+     */
+    public function printBarcodeBulk(Request $request)
+    {
+        $ids = $request->input('ids');
+        
+        if (!$ids) {
+            return redirect()->back()->with('error', 'Tidak ada asset yang dipilih');
+        }
+
+        // Convert comma-separated string to array
+        $idsArray = is_array($ids) ? $ids : explode(',', $ids);
+        
+        // Get all assets
+        $assets = Asset::with(['categoryAsset', 'conditionAsset', 'assetsStatus'])
+            ->whereIn('id', $idsArray)
+            ->get();
+
+        if ($assets->isEmpty()) {
+            return redirect()->back()->with('error', 'Asset tidak ditemukan');
+        }
+
+        return view('assets.print-barcode-bulk', compact('assets'));
+    }
+
+    /**
      * Handle QR Code scan - redirect ke halaman monitoring
      * Jika belum login, akan redirect ke login dulu
      */
