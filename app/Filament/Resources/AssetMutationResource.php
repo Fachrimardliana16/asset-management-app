@@ -273,9 +273,24 @@ class AssetMutationResource extends Resource
                     ->label('Jenis Mutasi'),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\DeleteAction::make(),
+
+                    Tables\Actions\Action::make('cetak_serah_terima')
+                        ->label('Cetak Doc Serah Terima')
+                        ->icon('heroicon-o-printer')
+                        ->color('success')
+                        ->url(fn($record) => route('assets.cetak-serah-terima', $record->id))
+                        ->openUrlInNewTab()
+                        ->tooltip('Cetak dokumen serah terima aset ini'),
+                ])
+                    ->label('Action')
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->color('primary')
+                    ->button()
+                    ->size('md'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

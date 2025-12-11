@@ -30,6 +30,17 @@ class MasterBranchUnitResource extends Resource
                 Section::make('Form Unit')
                     ->description('Input unit pada form di bawah ini.')
                     ->schema([
+                        Forms\Components\TextInput::make('accounting_code')
+                            ->label('Kode Akuntansi')
+                            ->required()
+                            ->maxLength(255),
+                        Forms\Components\Select::make('branch_office_id')
+                            // Pastikan nama method 'branchOffice' sesuai di Model
+                            ->relationship('branchOffice', 'name')
+                            ->label('Cabang')
+                            ->searchable()
+                            ->preload()
+                            ->nullable(), // Seharusnya nullable karena ada Unit Mandiri
                         Forms\Components\TextInput::make('name')
                             ->label('Nama')
                             ->required()
@@ -50,8 +61,16 @@ class MasterBranchUnitResource extends Resource
                     ->label('ID')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('accounting_code')
+                    ->label('Kode Akuntansi')
+                    ->sortable()
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nama')
+                    ->sortable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('branchOffice.name')
+                    ->label('Cabang')
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('desc')

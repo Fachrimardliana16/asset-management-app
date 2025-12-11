@@ -28,6 +28,10 @@ class AssetMutation extends Model
         'users_id',
     ];
 
+    protected $casts = [
+        'mutation_date' => 'date',
+    ];
+
     public function AssetsMutation()
     {
         return $this->belongsTo(Asset::class, 'assets_id', 'id');

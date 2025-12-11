@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('master_branch_office', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('branch_unit_id');
             $table->string('code')->unique();
             $table->string('name');
             $table->text('address')->nullable();
@@ -23,7 +22,6 @@ return new class extends Migration
 
             $table->uuid('users_id');
             $table->foreign('users_id')->references('id')->on('users')->onDelete('cascade');
-            $table->foreign('branch_unit_id')->references('id')->on('master_branch_unit')->onDelete('cascade');
             //$table->foreign('employee_id')->references('id')->on('employee_employee')->onDelete('cascade');
         });
     }

@@ -28,6 +28,8 @@ class DatabaseSeeder extends Seeder
             AssetTransactionStatusSeeder::class,
             AssetCategorySeeder::class,
             AssetsStatusSeeder::class,
+            MasterBranchOfficeSeeder::class,
+            MasterBranchUnitSeeder::class,
         ]);
 
         // Generate permissions for all resources

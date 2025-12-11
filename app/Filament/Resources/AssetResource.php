@@ -14,19 +14,27 @@ use App\Models\MasterAssetsLocation;
 use App\Models\MasterAssetsStatus;
 use App\Models\MasterAssetsSubLocation;
 use App\Models\MasterAssetsTransactionStatus;
+use Carbon\Carbon;
 use Filament\Forms;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\Layout;
 use Filament\Tables\Table;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
-use Filament\Tables\Columns\Layout;
-use Filament\Tables\Columns\ImageColumn;
 
 class AssetResource extends Resource
 {
@@ -42,73 +50,149 @@ class AssetResource extends Resource
     public static function form(Form $form): Form
     {
         return $form
+            ->statePath('data')
             ->schema([
-                Forms\Components\Section::make('Form Input Aset Baru')
-                    ->description('Form input aset baru')
+
+                // 1. Informasi Dasar Aset
+                Section::make('Informasi Dasar Aset')
+                    ->icon('heroicon-o-tag')
+                    ->description('Data identitas utama aset')
+                    ->collapsible()
                     ->schema([
-                        Forms\Components\TextInput::make('assets_number')
-                            ->label('Nomor Aset')
-                            ->required()
-                            ->maxLength(255),
-                        Forms\Components\TextInput::make('name')
-                            ->label('Nama Aset')
-                            ->required()
-                            ->maxLength(255),
-                        Forms\Components\Select::make('category_id')
+                        Grid::make(2)->schema([
+                            TextInput::make('assets_number')
+                                ->label('Nomor Aset')
+                                ->required()
+                                ->maxLength(255)
+                                ->placeholder('Contoh: AST-2025-001'),
+
+                            TextInput::make('name')
+                                ->label('Nama Aset')
+                                ->required()
+                                ->maxLength(255),
+                        ]),
+
+                        Select::make('category_id')
                             ->relationship('categoryAsset', 'name')
-                            ->label('Kategori')
+                            ->label('Kategori Aset')
                             ->searchable()
                             ->preload()
-                            ->required(),
-                        Forms\Components\Select::make('status_id')
-                            ->relationship('assetsStatus', 'name')
-                            ->label('Status')
-                            ->searchable()
-                            ->preload()
-                            ->required(),
-                        Forms\Components\Select::make('transaction_status_id')
-                            ->relationship('AssetTransactionStatus', 'name')
-                            ->label('Status Transaksi')
-                            ->hidden(),
-                        Forms\Components\DatePicker::make('purchase_date')
-                            ->label('Tanggal Pembelian')
                             ->required()
-                            ->default(Carbon::today()),
-                        Forms\Components\Select::make('condition_id')
-                            ->relationship('conditionAsset', 'name')
-                            ->label('Kondisi')
-                            ->required()
-                            ->searchable()
-                            ->preload(),
-                        Forms\Components\TextInput::make('price')
-                            ->label('Harga Beli')
-                            ->required()
-                            ->numeric()
-                            ->prefix('Rp. '),
-                        Forms\Components\TextInput::make('funding_source')
-                            ->label('Sumber Dana')
-                            ->required()
-                            ->maxLength(255),
-                        Forms\Components\TextInput::make('brand')
+                            ->columnSpanFull(),
+                    ]),
+
+                // 2. Status & Kondisi
+                Section::make('Status dan Kondisi')
+                    ->icon('heroicon-o-information-circle')
+                    ->collapsible()
+                    ->schema([
+                        Grid::make(2)->schema([
+                            Select::make('status_id')
+                                ->relationship('assetsStatus', 'name')
+                                ->label('Status Aset')
+                                ->searchable()
+                                ->preload()
+                                ->required(),
+
+                            Select::make('condition_id')
+                                ->relationship('conditionAsset', 'name')
+                                ->label('Kondisi Fisik')
+                                ->searchable()
+                                ->preload()
+                                ->required(),
+
+                            Select::make('transaction_status_id')
+                                ->relationship('AssetTransactionStatus', 'name')
+                                ->label('Status Transaksi')
+                                ->hidden()
+                                ->dehydrated(fn($state) => filled($state)),
+                        ]),
+                    ]),
+
+                // 3. Data Pembelian
+                Section::make('Data Pembelian')
+                    ->icon('heroicon-o-shopping-cart')
+                    ->collapsible()
+                    ->schema([
+                        Grid::make(3)->schema([
+                            DatePicker::make('purchase_date')
+                                ->label('Tanggal Pembelian')
+                                ->required()
+                                ->default(today())
+                                ->maxDate(today()),
+
+                            TextInput::make('price')
+                                ->label('Harga Beli')
+                                ->numeric()
+                                ->prefix('Rp ')
+                                ->inputMode('decimal')
+                                ->rules(['regex:/^\d{1,15}$/'])
+                                ->placeholder('Tanpa titik atau koma'),
+
+                            TextInput::make('funding_source')
+                                ->label('Sumber Dana')
+                                ->required()
+                                ->placeholder('Contoh : RKA 2025')
+                                ->maxLength(255),
+                        ]),
+
+                        TextInput::make('brand')
                             ->label('Merk')
                             ->required()
-                            ->maxLength(255),
-                        Forms\Components\TextInput::make('book_value')
-                            ->label('Nilai Buku')
-                            ->required()
                             ->maxLength(255)
-                            ->prefix('Rp. '),
-                        Forms\Components\DatePicker::make('book_value_expiry')
-                            ->label('Tanggal Habis Buku')
-                            ->required(),
-                        Forms\Components\Textarea::make('desc')
                             ->columnSpanFull(),
-                        Forms\Components\FileUpload::make('img')
-                            ->directory('Assets')
-                            ->label('Gambar'),
-                        Forms\Components\Hidden::make('users_id')
-                            ->default(auth()->id()),
-                    ])
+                    ]),
+
+                // 4. Data Akuntansi
+                Section::make('Nilai Buku & Penyusutan')
+                    ->icon('heroicon-o-calculator')
+                    ->collapsible()
+                    ->schema([
+                        Grid::make(2)->schema([
+                            TextInput::make('book_value')
+                                ->label('Nilai Buku Saat Ini')
+                                ->numeric()
+                                ->prefix('Rp ')
+                                ->helperText('Opsional, isi jika sudah ada penyusutan'),
+
+                            DatePicker::make('book_value_expiry')
+                                ->label('Tanggal Habis Nilai Buku')
+                                ->minDate(fn($get) => $get('purchase_date') ?? today()),
+                        ]),
+                    ]),
+
+                // 5. Deskripsi & Dokumentasi
+                Section::make('Deskripsi dan Foto Aset')
+                    ->icon('heroicon-o-document-text')
+                    ->collapsible()
+                    ->schema([
+                        Textarea::make('desc')
+                            ->label('Deskripsi / Spesifikasi')
+                            ->rows(4)
+                            ->columnSpanFull(),
+
+                        FileUpload::make('img')
+                            ->label('Foto Aset')
+                            ->image()
+                            ->multiple()                              // tetap bisa banyak
+                            ->maxFiles(5)
+                            ->maxSize(5120)                           // 5MB per file
+                            ->directory('assets')
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+
+                            // Yang bikin "gede" dihapus/dikecilin:
+                            ->imagePreviewHeight('100')               // preview kecil & rapi
+                            ->panelLayout('compact')                  // paling penting! ini yang bikin normal
+                            ->removeUploadedFileButtonPosition('right')
+                            ->uploadButtonPosition('center')
+
+                            ->helperText('Maksimal 5 foto, ≤ 5MB, format JPG/PNG/WebP')
+                            ->columnSpanFull(),
+                    ]),
+
+                // Hidden field
+                Hidden::make('users_id')
+                    ->default(auth()->id()),
             ]);
     }
 
@@ -118,7 +202,7 @@ class AssetResource extends Resource
             ->columns([
                 // 1. Gambar + No (hover muncul created_at)
                 Tables\Columns\ImageColumn::make('img')
-                    ->label('Aset')
+                    ->label('Gambar')
                     ->size(60)
                     ->rounded()
                     ->defaultImageUrl(asset('images/no-image.png'))
@@ -132,7 +216,7 @@ class AssetResource extends Resource
                     ->formatStateUsing(
                         fn($record) =>
                         $record->assets_number . "\n" .
-                            $record->name . "\n" .
+                            $record->name . ":" . "\n" .
                             "<span class='text-xs text-gray-600'>{$record->brand}</span>"
                     )
                     ->html()
@@ -143,9 +227,7 @@ class AssetResource extends Resource
 
                 // 3. Kategori + Kondisi + Status (pakai description & badge)
                 Tables\Columns\TextColumn::make('categoryAsset.name')
-                    ->label('Kategori')
-                    ->badge()
-                    ->color('primary')
+                    ->label('Info Aset')
                     ->description(fn($record) => $record->conditionAsset?->name, position: 'above')
                     ->description(fn($record) => $record->assetsStatus?->name, position: 'below')
                     ->sortable(),
@@ -173,7 +255,7 @@ class AssetResource extends Resource
 
                 // 6. Tanggal Pembelian + Habis Buku
                 Tables\Columns\TextColumn::make('purchase_date')
-                    ->label('Tgl Beli')
+                    ->label('Tanggal Beli')
                     ->date('d M Y')
                     ->sortable()
                     ->description(
@@ -377,6 +459,15 @@ class AssetResource extends Resource
                                 ->success()
                                 ->title('Sukses!')
                                 ->body("Aset berhasil dimutasi (Transaksi {$transactionType}).")
+                                ->actions([
+                                    Action::make('cetak_doc')
+                                        ->label('Cetak Doc Serah Terima')
+                                        ->icon('heroicon-o-printer')           // ikon printer (opsional, tapi bagus)
+                                        ->button()                             // bikin tombol lebih menonjol (primary style)
+                                        ->color('primary')                     // warna biru (bisa diganti 'success', 'warning', dll)
+                                        ->url(route('assets.cetak-serah-terima', $record->id))  // GANTI dengan route cetak kamu
+                                        ->openUrlInNewTab(),                   // buka di tab baru (biar user tetap di halaman Filament)
+                                ])
                                 ->send();
                         })
                         ->requiresConfirmation()
@@ -592,5 +683,26 @@ class AssetResource extends Resource
                 'latestMutation.AssetsMutationemployee',
                 'latestMutation.AssetsMutationlocation',
             ]);
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
+
+    protected function afterCreate(): void
+    {
+        Notification::make()
+            ->title('Aset berhasil ditambahkan!')
+            ->success()
+            ->send();
+    }
+
+    protected function afterSave(): void
+    {
+        Notification::make()
+            ->title('Aset berhasil diperbarui!')
+            ->success()
+            ->send();
     }
 }

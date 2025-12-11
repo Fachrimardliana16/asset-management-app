@@ -15,10 +15,13 @@ use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\HtmlString;
+use Illuminate\Support\Facades\Auth;
 
 class AssetPurchaseResource extends Resource
 {
@@ -68,36 +71,91 @@ class AssetPurchaseResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn($query) => $query->with('purchases'))
             ->columns([
-                Tables\Columns\TextColumn::make('document_number')
-                    ->label('No. Dokumen')
+                // 1. No. DBP & Tanggal
+                TextColumn::make('document_number')
+                    ->label('Info DPB')
+                    ->html()
+                    ->formatStateUsing(fn($record) => new HtmlString(
+                        "<div class='font-medium'>{$record->document_number}</div>" .
+                            "<div class='mt-1 text-sm text-gray-600'>{$record->date->format('d M Y')}</div>"
+                    ))
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('date')
-                    ->label('Tanggal Permintaan')
-                    ->date('d M Y')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('asset_name')
-                    ->label('Nama Barang')
-                    ->searchable()
-                    ->limit(25),
-                Tables\Columns\TextColumn::make('category.name')
-                    ->label('Kategori')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('employee.name')
-                    ->label('Pemohon')
-                    ->sortable()
-                    ->toggleable(),
-                Tables\Columns\TextColumn::make('location.name')
+
+                // 2. Barang (Nama Barang + Kategori + Jumlah)
+                TextColumn::make('asset_name')
+                    ->label('Detail Barang')
+                    ->html()
+                    ->formatStateUsing(fn($record) => new HtmlString(
+                        "<div class='font-medium'>{$record->asset_name}</div>" .
+
+                            // Baris kedua: Kategori (polos, tanpa badge)
+                            "<div class='mt-1 text-sm text-gray-600'>" .
+                            ($record->category?->name ?? '-') .
+                            "</div>" .
+
+                            // Baris ketiga: Quantity (polos, rata kiri lurus)
+                            "<div class='mt-1 text-sm text-gray-600'>" .
+                            "{$record->quantity} unit" .
+                            "</div>"
+                    ))
+                    ->searchable(['asset_name', 'category.name']),
+
+                // 3. Pemohon + Keperluan
+                TextColumn::make('employee.name')
+                    ->label('Pemohon & Keperluan')
+                    ->html()
+                    ->formatStateUsing(fn($record) => new HtmlString(
+                        "<div class='flex items-center gap-1 font-medium'>" .
+                            "<x-heroicon-m-user class='w-4 h-4 text-gray-600' />" .
+                            ($record->employee?->name ?? '-') .
+                            "</div>" .
+                            "<div class='mt-1 text-xs text-gray-600'>" .
+                            \Illuminate\Support\Str::limit($record->purpose ?? '', 60, '...') .
+                            "</div>"
+                    ))
+                    ->tooltip(fn($record) => $record->purpose)
+                    ->searchable(['employee.name', 'purpose']),
+
+                // 4. Lokasi + Sub Lokasi
+                TextColumn::make('location.name')
                     ->label('Lokasi')
-                    ->sortable()
-                    ->toggleable(),
-                Tables\Columns\TextColumn::make('quantity')
-                    ->label('Jumlah')
-                    ->numeric(),
-                Tables\Columns\TextColumn::make('purpose')
-                    ->label('Keperluan')
-                    ->limit(30),
+                    ->html()
+                    ->formatStateUsing(fn($record) => new HtmlString(
+                        "<div class='flex items-center gap-1 font-medium'>" .
+                            "<x-heroicon-m-building-office-2 class='w-4 h-4 text-primary-600' />" .
+                            ($record->location?->name ?? '-') .
+                            "</div>" .
+                            "<div class='mt-1 text-xs text-gray-600'>" .
+                            ($record->subLocation?->name ?? $record->masterAssetsSubLocation?->name ?? '–') .
+                            "</div>"
+                    ))
+                    ->searchable(['location.name', 'subLocation.name']),
+
+                // 5. Total Harga (jika sudah dibeli)
+                TextColumn::make('total_harga')
+                    ->label('Total Harga')
+                    ->html()
+                    ->state(function ($record) {
+                        if ($record->purchase_status === 'purchased' && $record->purchases->isNotEmpty()) {
+                            $purchase = $record->purchases->first();
+                            $totalPrice = $purchase->price * $record->quantity;
+                            return new HtmlString(
+                                "<div class='font-medium text-green-600'>" .
+                                    "Rp " . number_format($totalPrice, 0, ',', '.') .
+                                    "</div>" .
+                                    "<div class='mt-1 text-xs text-gray-500'>" .
+                                    "@Rp " . number_format($purchase->price, 0, ',', '.') . " × {$record->quantity} unit" .
+                                    "</div>"
+                            );
+                        }
+                        return new HtmlString(
+                            "<div class='text-xs italic text-gray-400'>Belum dibeli</div>"
+                        );
+                    }),
+
                 Tables\Columns\TextColumn::make('purchase_status')
                     ->label('Status')
                     ->badge()
@@ -152,7 +210,7 @@ class AssetPurchaseResource extends Resource
                         ->modalHeading(fn(AssetRequests $record) => 'Selesaikan Pembelian: ' . $record->document_number)
                         ->modalDescription(fn(AssetRequests $record) => "Akan membuat {$record->quantity} aset baru dengan nomor aset otomatis.")
                         ->modalSubmitActionLabel('Simpan & Buat Aset')
-                        ->modalWidth('xl')
+                        // ->modalWidth('4xl')
                         ->form(function (AssetRequests $record) {
                             return [
                                 Forms\Components\Section::make('Info Permintaan')
@@ -390,9 +448,18 @@ class AssetPurchaseResource extends Resource
                     Tables\Actions\ViewAction::make()
                         ->label('Lihat Detail'),
 
-                    // 3. Action Lain: Edit
+                    // 2b. Action: Cetak Faktur (hanya jika sudah dibeli)
+                    Tables\Actions\Action::make('cetak_faktur')
+                        ->label('Cetak Faktur')
+                        ->icon('heroicon-o-printer')
+                        ->color('info')
+                        ->visible(fn(AssetRequests $record) => $record->purchase_status === 'purchased')
+                        ->url(fn(AssetRequests $record) => route('purchase.invoice', ['record' => $record->id]))
+                        ->openUrlInNewTab(),
+
                     Tables\Actions\EditAction::make()
-                        ->label('Edit Permintaan'),
+                        ->label('Edit Permintaan')
+                        ->visible(fn() => in_array(Auth::user()->role, ['super_admin', 'admin', 'kabag', 'kasubag'])),
 
                     // 4. Action Lain: Hapus (optional)
                     Tables\Actions\DeleteAction::make()
@@ -422,6 +489,7 @@ class AssetPurchaseResource extends Resource
     {
         return [
             'index' => Pages\ListAssetPurchases::route('/'),
+            'view' => Pages\ViewAssetPurchase::route('/{record}'),
         ];
     }
 }

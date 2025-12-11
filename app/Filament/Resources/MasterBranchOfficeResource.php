@@ -34,10 +34,6 @@ class MasterBranchOfficeResource extends Resource
                             ->label('Kode')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\Select::make('branch_unit_id')
-                            ->relationship('BranchOffice', 'name')
-                            ->label('Kantor Unit')
-                            ->required(),
                         Forms\Components\TextInput::make('name')
                             ->label('Nama Kantor Cabang')
                             ->required()
@@ -69,8 +65,8 @@ class MasterBranchOfficeResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nama')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('BranchOffice.name')
-                    ->label('Kantor Unit')
+                Tables\Columns\TextColumn::make('address')
+                    ->label('Alamat')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('phone')
                     ->label('Telepon')

@@ -56,10 +56,6 @@ class AssetSubLocationSeeder extends Seeder
             // Ruang SPI
             'Ruang SPI',
 
-            // Ruang Cabang Kota Bangga (kalau memang masih di pusat)
-            'Ruang Cabang Kota Bangga',
-            'Ruang Kepala Cabang Kota Bangga',
-
             // Ruang Direktur
             'Ruang Direktur Umum',
             'Ruang Direktur Utama',

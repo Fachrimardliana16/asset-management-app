@@ -24,6 +24,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/asset/{id}/print-barcode', [AssetBarcodeController::class, 'printBarcode'])
         ->name('asset.print-barcode');
 
+    // Print Purchase Invoice
+    Route::get('/purchase/invoice/{record}', [\App\Http\Controllers\PurchaseInvoiceController::class, 'printInvoice'])
+        ->name('purchase.invoice');
+
+    // Print Mutation Serah Terima Document
+    Route::get('/assets/cetak-serah-terima/{id}', [\App\Http\Controllers\MutationDocumentController::class, 'cetakSerahTerima'])
+        ->name('assets.cetak-serah-terima');
+
     // Export PDF Routes
     Route::get('/export/asset-requests', [ExportPdfController::class, 'assetRequests'])
         ->name('export.asset-requests');

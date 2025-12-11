@@ -33,7 +33,8 @@ class AssetLocationSeeder extends Seeder
             ['kode' => '14', 'name' => 'Ruang Kantor Unit IKK Karangreja', 'desc' => ''],
             ['kode' => '15', 'name' => 'Ruang Kantor Unit IKK Kaligondang', 'desc' => ''],
             ['kode' => '16', 'name' => 'Ruang Kantor Cabang Kota', 'desc' => ''],
-            ['kode' => '17', 'name' => 'Ruang Kantor Cabang Jendral Soedirman', 'desc' => ''],
+            ['kode' => '17', 'name' => 'Ruang Kantor Cabang Usman Janatin', 'desc' => ''],
+            ['kode' => '18', 'name' => 'Ruang Kantor Cabang Jendral Soedirman', 'desc' => ''],
 
         ];
 
