@@ -165,24 +165,21 @@ class AssetMaintenanceResource extends Resource
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make(),
-                    Action::make('kwitansi')
-                        ->label('Kwitansi')
-                        ->icon('heroicon-o-document-text') // optional: ganti icon sesuai keinginan
-                        ->color('success') // optional: warna button
-                        // ->url(fn ($record) => route('kwitansi.show', $record)) // contoh jika buka URL
-                        // ->openUrlInNewTab()
-                        // atau ->action(fn ($record) => /* logic custom */)
-                        // Sesuaikan logic di sini sesuai kebutuhanmu (misalnya buka modal, generate PDF, dll)
-                        ->requiresConfirmation() // optional: tambah konfirmasi
-                        ->action(function ($record) {
-                            // Contoh placeholder action
-                            // redirect()->route('kwitansi.generate', $record);
-                            // atau logic lain
-                        }),
-
+                    Action::make('cetak_kwitansi')
+                        ->label('Cetak Kwitansi')
+                        ->icon('heroicon-o-document-text')
+                        ->color('success')
+                        ->url(fn ($record) => route('maintenance.invoice', $record->id))
+                        ->openUrlInNewTab(),
+                    Action::make('download_kwitansi')
+                        ->label('Download Kwitansi')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->color('info')
+                        ->url(fn ($record) => route('maintenance.invoice.download', $record->id))
+                        ->openUrlInNewTab(),
                 ])
-                    ->label('Actions') // optional: label untuk group
-                    ->button() // optional: jadikan button biasa bukan dropdown
+                    ->label('Actions')
+                    ->button()
                     ->color('primary')
                     ->icon('heroicon-m-ellipsis-vertical')
             ])

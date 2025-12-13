@@ -36,6 +36,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/assets/cetak-serah-terima/{id}', [\App\Http\Controllers\MutationDocumentController::class, 'cetakSerahTerima'])
         ->name('assets.cetak-serah-terima');
 
+    // Print Maintenance Invoice/Kwitansi
+    Route::get('/maintenance/invoice/{id}', [\App\Http\Controllers\MaintenanceInvoiceController::class, 'printInvoice'])
+        ->name('maintenance.invoice');
+    Route::get('/maintenance/invoice/{id}/download', [\App\Http\Controllers\MaintenanceInvoiceController::class, 'downloadInvoice'])
+        ->name('maintenance.invoice.download');
+
     // Export PDF Routes
     Route::get('/export/asset-requests', [ExportPdfController::class, 'assetRequests'])
         ->name('export.asset-requests');
