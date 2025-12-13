@@ -36,6 +36,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/assets/cetak-serah-terima/{id}', [\App\Http\Controllers\MutationDocumentController::class, 'cetakSerahTerima'])
         ->name('assets.cetak-serah-terima');
 
+    // Print Asset Disposal SK Document
+    Route::get('/disposal/cetak-sk/{id}', [\App\Http\Controllers\AssetDisposalDocumentController::class, 'cetakSKPenghapusan'])
+        ->name('disposal.cetak-sk');
+
     // Print Maintenance Invoice/Kwitansi
     Route::get('/maintenance/invoice/{id}', [\App\Http\Controllers\MaintenanceInvoiceController::class, 'printInvoice'])
         ->name('maintenance.invoice');
