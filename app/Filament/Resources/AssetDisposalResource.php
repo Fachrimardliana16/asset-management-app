@@ -190,8 +190,30 @@ class AssetDisposalResource extends Resource
                     ->label('Proses Penghapusan'),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\DeleteAction::make(),
+                    Tables\Actions\Action::make('kwitansi')
+                        ->label('Surat Penghapusan')
+                        ->icon('heroicon-o-document-text') // optional: ganti icon sesuai keinginan
+                        ->color('success') // optional: warna button
+                        // ->url(fn ($record) => route('kwitansi.show', $record)) // contoh jika buka URL
+                        // ->openUrlInNewTab()
+                        // atau ->action(fn ($record) => /* logic custom */)
+                        // Sesuaikan logic di sini sesuai kebutuhanmu (misalnya buka modal, generate PDF, dll)
+                        ->requiresConfirmation() // optional: tambah konfirmasi
+                        ->action(function ($record) {
+                            // Contoh placeholder action
+                            // redirect()->route('kwitansi.generate', $record);
+                            // atau logic lain
+                        }),
+
+                ])
+                    ->label('Actions') // optional: label untuk group
+                    ->button() // optional: jadikan button biasa bukan dropdown
+                    ->color('primary')
+                    ->icon('heroicon-m-ellipsis-vertical')
             ])
             ->bulkActions([
                 // Removed bulk delete - disposal records should be preserved
