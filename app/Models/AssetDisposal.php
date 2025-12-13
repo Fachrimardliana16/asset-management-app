@@ -39,4 +39,12 @@ class AssetDisposal extends Model
     {
         return $this->belongsTo(Employee::class, 'employee_id', 'id');
     }
+
+    /**
+     * Get the user who created the disposal.
+     */
+    public function userDisposals()
+    {
+        return $this->belongsTo(User::class, 'users_id', 'id');
+    }
 }

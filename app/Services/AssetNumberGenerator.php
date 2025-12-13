@@ -11,7 +11,8 @@ class AssetNumberGenerator
 {
     /**
      * Generate nomor aset dengan format:
-     * aaaa.bb.cc.dddd.ee.ff.gggg.x
+     * aaaa.bb.cc.dddd.ee.ff.gggg.x (jika quantity > 1)
+     * aaaa.bb.cc.dddd.ee.ff.gggg (jika quantity = 1)
      *
      * aaaa = kode kategori
      * bb = 00 (fixed)
@@ -27,7 +28,8 @@ class AssetNumberGenerator
         string $locationId,
         \DateTime|string $purchaseDate,
         int $itemIndex = 1,
-        ?int $sequentialNumber = null
+        ?int $sequentialNumber = null,
+        int $totalQuantity = 1
     ): string {
         // Get category code
         $category = MasterAssetsCategory::find($categoryId);
@@ -51,20 +53,34 @@ class AssetNumberGenerator
             $sequentialNumber = self::getYearlySequentialNumber($year);
         }
 
-        // Convert item index to letter (1=a, 2=b, etc.)
-        $suffix = self::indexToLetter($itemIndex);
-
         // Build the asset number
-        $assetNumber = sprintf(
-            '%s.00.%s.%04d.%s.%s.%s.%s',
-            $categoryCode,
-            $locationCode,
-            $sequentialNumber,
-            $day,
-            $month,
-            $year,
-            $suffix
-        );
+        // Only add suffix if quantity > 1
+        if ($totalQuantity > 1) {
+            // Convert item index to letter (1=a, 2=b, etc.)
+            $suffix = self::indexToLetter($itemIndex);
+            
+            $assetNumber = sprintf(
+                '%s.00.%s.%04d.%s.%s.%s.%s',
+                $categoryCode,
+                $locationCode,
+                $sequentialNumber,
+                $day,
+                $month,
+                $year,
+                $suffix
+            );
+        } else {
+            // No suffix for single item
+            $assetNumber = sprintf(
+                '%s.00.%s.%04d.%s.%s.%s',
+                $categoryCode,
+                $locationCode,
+                $sequentialNumber,
+                $day,
+                $month,
+                $year
+            );
+        }
 
         return $assetNumber;
     }
@@ -92,7 +108,14 @@ class AssetNumberGenerator
         $sequentialNumber = self::getYearlySequentialNumber($date->format('Y'));
 
         for ($i = 1; $i <= $quantity; $i++) {
-            $assetNumbers[] = self::generate($categoryId, $locationId, $purchaseDate, $i, $sequentialNumber);
+            $assetNumbers[] = self::generate(
+                $categoryId, 
+                $locationId, 
+                $purchaseDate, 
+                $i, 
+                $sequentialNumber,
+                $quantity // Pass total quantity
+            );
         }
 
         return $assetNumbers;
@@ -102,7 +125,7 @@ class AssetNumberGenerator
      * Get the next sequential number for purchases in a given year
      * Based on unique faktur/permintaan, not individual items
      */
-    private static function getYearlySequentialNumber(string $year): int
+    public static function getYearlySequentialNumber(string $year): int
     {
         // Count distinct assetrequest_id in purchases this year
         $purchaseCount = AssetPurchase::whereYear('purchase_date', $year)
