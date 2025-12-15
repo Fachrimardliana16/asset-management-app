@@ -212,16 +212,20 @@ class AssetMutationResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('No.')
                     ->rowIndex(),
+
                 Tables\Columns\TextColumn::make('mutations_number')
                     ->label('No. Mutasi')
                     ->searchable()
                     ->sortable(),
+                //->weight(FontWeight::SemiBold),
+
                 Tables\Columns\TextColumn::make('mutation_date')
                     ->label('Tanggal')
                     ->date('d/m/Y')
                     ->sortable(),
+
                 Tables\Columns\TextColumn::make('AssetsMutationtransactionStatus.name')
-                    ->label('Jenis Mutasi')
+                    ->label('Jenis')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
                         'Transaksi Keluar' => 'danger',
@@ -229,13 +233,17 @@ class AssetMutationResource extends Resource
                         default => 'gray',
                     })
                     ->searchable(),
-                Tables\Columns\TextColumn::make('AssetsMutation.assets_number')
-                    ->label('No. Aset')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('AssetsMutation.name')
-                    ->label('Nama Aset')
-                    ->searchable()
+
+                // Gabung No. Aset + Nama Aset jadi satu kolom
+                Tables\Columns\TextColumn::make('asset_info')
+                    ->label('Aset')
+                    ->getStateUsing(function ($record) {
+                        $asset = $record->AssetsMutation;
+                        return $asset?->assets_number . ' - ' . $asset?->name;
+                    })
+                    ->searchable(['AssetsMutation.assets_number', 'AssetsMutation.name'])
                     ->wrap(),
+
                 Tables\Columns\TextColumn::make('MutationCondition.name')
                     ->label('Kondisi')
                     ->badge()
@@ -246,23 +254,32 @@ class AssetMutationResource extends Resource
                         default => 'gray',
                     })
                     ->searchable(),
-                Tables\Columns\TextColumn::make('AssetsMutationemployee.name')
-                    ->label('Pemegang')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('AssetsMutationlocation.name')
-                    ->label('Lokasi')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('AssetsMutationsubLocation.name')
-                    ->label('Sub Lokasi')
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('holder_location')
+                    ->label('Pemegang / Lokasi')
+                    ->getStateUsing(function ($record) {
+                        $asset = $record->AssetsMutation;
+                        $parts = array_filter([
+                            $asset?->employee?->name,
+                            $asset?->location?->name,
+                        ]);
+                        return $parts ? implode(' • ', $parts) : '-';
+                    })
+                    ->searchable(['AssetsMutationemployee.name', 'AssetsMutationlocation.name'])
+                    ->wrap(),
+
                 Tables\Columns\TextColumn::make('desc')
                     ->label('Keterangan')
-                    ->wrap()
                     ->limit(50)
+                    ->wrap()
                     ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('AssetsMutationsubLocation.name')
+                    ->label('Sub Lokasi')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Dibuat')
+                    ->label('Dibuat Pada')
                     ->dateTime('d/m/Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

@@ -16,47 +16,44 @@
             <div class="space-y-4">
                 {{-- Camera Scanner --}}
                 <div x-data="barcodeScanner()" x-init="init()" class="space-y-4">
-                    <div class="flex flex-col md:flex-row gap-4">
+                    <div class="flex flex-col gap-4 md:flex-row">
                         {{-- Camera Preview --}}
                         <div class="flex-1">
-                            <div class="relative bg-gray-900 rounded-lg overflow-hidden" style="min-height: 350px;">
+                            <div class="relative overflow-hidden bg-gray-900 rounded-lg aspect-video md:aspect-auto"
+                                style="min-height: 350px;">
                                 {{-- QR Reader Container - always visible but content controlled by library --}}
-                                <div
-                                    id="qr-reader"
-                                    class="w-full"
-                                    :class="cameraActive ? '' : 'hidden'"
-                                ></div>
+                                <div id="qr-reader" class="w-full" :class="cameraActive ? '' : 'hidden'"></div>
 
                                 {{-- Placeholder when camera not active --}}
-                                <div
-                                    x-show="!cameraActive"
-                                    class="flex flex-col items-center justify-center text-gray-400 py-16"
-                                >
-                                    <svg class="w-20 h-20 mb-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                                <div x-show="!cameraActive"
+                                    class="flex flex-col items-center justify-center py-16 text-gray-400">
+                                    <svg class="w-20 h-20 mb-4 text-gray-500" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                            d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                                     </svg>
-                                    <p class="text-center text-lg">Kamera tidak aktif</p>
-                                    <p class="text-sm text-gray-500 mt-1">Klik tombol di bawah untuk scan QR Code</p>
+                                    <p class="text-lg text-center">Kamera tidak aktif</p>
+                                    <p class="mt-1 text-sm text-gray-500">Klik tombol di bawah untuk scan QR Code</p>
                                 </div>
                             </div>
 
                             <div class="flex gap-2 mt-4">
-                                <button
-                                    @click="cameraActive ? stopCamera() : startCamera()"
-                                    type="button"
-                                    class="flex-1 px-4 py-3 rounded-lg transition flex items-center justify-center gap-2 font-medium"
-                                    :class="cameraActive ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-green-500 text-white hover:bg-green-600'"
-                                >
+                                <button @click="cameraActive ? stopCamera() : startCamera()" type="button"
+                                    class="flex items-center justify-center flex-1 gap-2 px-4 py-3 font-medium transition rounded-lg"
+                                    :class="cameraActive ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-green-500 text-white hover:bg-green-600'">
                                     <span x-show="cameraActive" class="flex items-center gap-2">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
                                         </svg>
                                         Stop Kamera
                                     </span>
                                     <span x-show="!cameraActive" class="flex items-center gap-2">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                         </svg>
                                         Mulai Scan QR Code
                                     </span>
@@ -67,31 +64,25 @@
                         {{-- Manual Input --}}
                         <div class="flex-1 space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Input Manual Nomor Aset
                                 </label>
                                 <div class="flex gap-2">
-                                    <input
-                                        type="text"
-                                        wire:model="barcodeInput"
-                                        placeholder="Masukkan nomor aset..."
-                                        class="flex-1 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                                        @keydown.enter="$wire.searchAsset()"
-                                    >
-                                    <button
-                                        wire:click="searchAsset"
-                                        type="button"
-                                        class="px-6 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition flex items-center gap-2"
-                                    >
+                                    <input type="text" wire:model="barcodeInput" placeholder="Masukkan nomor aset..."
+                                        class="flex-1 border-gray-300 rounded-lg shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-primary-500 focus:ring-primary-500"
+                                        @keydown.enter="$wire.searchAsset()">
+                                    <button wire:click="searchAsset" type="button"
+                                        class="flex items-center gap-2 px-6 py-2 text-white transition rounded-lg bg-primary-500 hover:bg-primary-600">
                                         <x-heroicon-o-magnifying-glass class="w-5 h-5" />
                                         Cari
                                     </button>
                                 </div>
                             </div>
 
-                            <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                                <h4 class="font-semibold text-blue-700 dark:text-blue-300 mb-2">📱 Petunjuk Scan QR Code:</h4>
-                                <ol class="list-decimal list-inside text-sm text-blue-600 dark:text-blue-400 space-y-1">
+                            <div class="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+                                <h4 class="mb-2 font-semibold text-blue-700 dark:text-blue-300">📱 Petunjuk Scan QR
+                                    Code:</h4>
+                                <ol class="space-y-1 text-sm text-blue-600 list-decimal list-inside dark:text-blue-400">
                                     <li>Klik <strong>"Mulai Scan QR Code"</strong></li>
                                     <li>Izinkan akses kamera jika diminta</li>
                                     <li>Arahkan kamera ke QR Code pada stiker</li>
@@ -101,7 +92,7 @@
                             </div>
 
                             {{-- Last scanned info --}}
-                            <div x-show="lastScanned" x-cloak class="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                            <div x-show="lastScanned" x-cloak class="p-4 rounded-lg bg-green-50 dark:bg-green-900/20">
                                 <p class="text-sm text-green-700 dark:text-green-300">
                                     <span class="font-semibold">✅ Terakhir di-scan:</span>
                                     <span x-text="lastScanned"></span>
@@ -109,7 +100,7 @@
                             </div>
 
                             {{-- Error message --}}
-                            <div x-show="errorMessage" x-cloak class="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                            <div x-show="errorMessage" x-cloak class="p-4 rounded-lg bg-red-50 dark:bg-red-900/20">
                                 <p class="text-sm text-red-700 dark:text-red-300">
                                     <span class="font-semibold">❌ Error:</span>
                                     <span x-text="errorMessage"></span>
@@ -142,21 +133,36 @@
     </div>
 
     <style>
-        [x-cloak] { display: none !important; }
+        [x-cloak] {
+            display: none !important;
+        }
+
         #qr-reader {
             width: 100% !important;
+            height: 100% !important;
             border: none !important;
         }
+
         #qr-reader video {
             width: 100% !important;
+            height: 100% !important;
+            object-fit: cover;
             border-radius: 0.5rem;
         }
+
         #qr-reader__scan_region {
             background: transparent !important;
         }
+
+        #qr-reader__scan_region video {
+            width: 100% !important;
+            height: auto !important;
+        }
+
         #qr-reader__dashboard {
             padding: 10px !important;
         }
+
         #qr-reader__dashboard_section_csr button {
             background-color: #3b82f6 !important;
             color: white !important;
@@ -203,10 +209,16 @@
                         // Initialize scanner
                         this.html5QrCode = new Html5Qrcode("qr-reader");
 
+                        // qrbox dinamis - 75% dari sisi terkecil viewfinder
+                        const qrboxFunction = (viewfinderWidth, viewfinderHeight) => {
+                            const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                            const qrboxSize = Math.floor(minEdge * 0.75); // Ubah 0.75 sesuai kebutuhan (0.7-0.8 bagus)
+                            return { width: qrboxSize, height: qrboxSize };
+                        };
+
                         const config = {
                             fps: 10,
-                            qrbox: { width: 250, height: 250 },
-                            aspectRatio: 1.0,
+                            qrbox: qrboxFunction,
                             showTorchButtonIfSupported: true,
                             showZoomSliderIfSupported: true,
                         };
@@ -258,6 +270,15 @@
                                 // Ignore - just means no QR detected yet
                             }
                         );
+
+                        // Workaround: Hapus inline width yang di-set library agar responsif
+                        const videoElement = document.querySelector('#qr-reader video');
+                        if (videoElement) {
+                            videoElement.style.width = '100% !important';
+                            videoElement.style.height = '100% !important';
+                            videoElement.style.removeProperty('width');
+                            videoElement.style.removeProperty('height');
+                        }
 
                         this.scanning = true;
 

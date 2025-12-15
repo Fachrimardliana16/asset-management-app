@@ -130,20 +130,23 @@ class AssetDisposalResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('No.')
                     ->rowIndex(),
-                Tables\Columns\TextColumn::make('disposals_number')
-                    ->label('No. Penghapusan')
-                    ->searchable()
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('disposal_date')
                     ->label('Tanggal')
                     ->date('d/m/Y')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('assetDisposals.assets_number')
-                    ->label('No. Aset')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('assetDisposals.name')
-                    ->label('Nama Aset')
+                Tables\Columns\TextColumn::make('disposals_number')
+                    ->label('No. Penghapusan')
                     ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('assetDisposals.assets_number')
+                    ->label('Aset')
+                    ->formatStateUsing(function ($record) {
+                        $disposal = $record->assetDisposals;
+                        return $disposal
+                            ? $disposal->assets_number . ' - ' . $disposal->name
+                            : '-';
+                    })
+                    ->searchable(['assetDisposals.assets_number', 'assetDisposals.name'])
                     ->wrap(),
                 Tables\Columns\TextColumn::make('book_value')
                     ->label('Nilai Buku')

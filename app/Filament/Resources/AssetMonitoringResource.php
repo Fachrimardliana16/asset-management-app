@@ -109,13 +109,19 @@ class AssetMonitoringResource extends Resource
                     ->label('Tanggal Monitoring')
                     ->date()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('assetMonitoring.assets_number')
-                    ->label('Nomor Aset')
-                    ->sortable()
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('assetMonitoring.name')
-                    ->label('Nama Aset')
-                    ->searchable(),
+                Tables\Columns\TextColumn::make('assetMonitoring.assets_number') // bisa pakai salah satu sebagai base
+                    ->label('Aset')
+                    ->formatStateUsing(function ($record) {
+                        $monitoring = $record->assetMonitoring;
+                        return $monitoring?->assets_number . ' - ' . $monitoring?->name;
+                    })
+                    ->searchable(query: function ($query, $search) {
+                        return $query->whereHas('assetMonitoring', function ($q) use ($search) {
+                            $q->where('assets_number', 'like', "%{$search}%")
+                                ->orWhere('name', 'like', "%{$search}%");
+                        });
+                    })
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('MonitoringoldCondition.name')
                     ->label('Kondisi Lama')
                     ->searchable(),
@@ -135,9 +141,16 @@ class AssetMonitoringResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\ViewAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    //Tables\Actions\EditAction::make(),
+                    Tables\Actions\ViewAction::make(),
+                    //Tables\Actions\DeleteAction::make(),
+                ])
+                    ->label('Actions')
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->color('primary')     // atau 'gray', 'info', dll (opsional)
+                    ->size('md')           // opsional: sm, md, lg
+                    ->button(),            // jika ingin tampil sebagai button biasa, bukan dropdown di samping
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

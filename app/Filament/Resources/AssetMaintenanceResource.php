@@ -113,12 +113,16 @@ class AssetMaintenanceResource extends Resource
                     ->label('Tanggal')
                     ->date('d/m/Y')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('AssetMaintenance.assets_number')
-                    ->label('No. Aset')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('AssetMaintenance.name')
-                    ->label('Nama Aset')
-                    ->searchable()
+                Tables\Columns\TextColumn::make('asset_info')
+                    ->label('Aset')
+                    ->getStateUsing(function ($record) {
+                        $maintenance = $record->AssetMaintenance;
+                        return $maintenance
+                            ? $maintenance->assets_number . ' - ' . $maintenance->name
+                            : '-';
+                    })
+                    ->searchable(['AssetMaintenance.assets_number', 'AssetMaintenance.name'])
+                    ->sortable() // opsional, jika ingin sortable berdasarkan salah satu field
                     ->wrap(),
                 Tables\Columns\TextColumn::make('service_type')
                     ->label('Jenis Perbaikan')

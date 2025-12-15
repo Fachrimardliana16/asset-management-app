@@ -84,8 +84,8 @@ class MonitoringAsetScanner extends Page implements HasForms
                                 ->label('Foto Aset')
                                 ->content(fn() => new HtmlString(
                                     $this->scannedAsset && $this->scannedAsset->img
-                                        ? '<div class="flex justify-center"><img src="' . asset('storage/' . $this->scannedAsset->img) . '" alt="Foto Aset" class="max-w-full h-auto max-h-48 rounded-lg shadow-md object-cover border border-gray-200" /></div>'
-                                        : '<div class="flex justify-center items-center h-48 bg-gray-100 dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-600"><span class="text-gray-400 dark:text-gray-500">Tidak ada foto</span></div>'
+                                        ? '<div class="flex justify-center"><img src="' . asset('storage/' . $this->scannedAsset->img) . '" alt="Foto Aset" class="object-cover h-auto max-w-full border border-gray-200 rounded-lg shadow-md max-h-48" /></div>'
+                                        : '<div class="flex items-center justify-center h-48 bg-gray-100 border border-gray-300 border-dashed rounded-lg dark:bg-gray-800 dark:border-gray-600"><span class="text-gray-400 dark:text-gray-500">Tidak ada foto</span></div>'
                                 ))
                                 ->columnSpan(1),
 
@@ -135,7 +135,7 @@ class MonitoringAsetScanner extends Page implements HasForms
                     ->visible(fn() => $this->showAssetInfo),
 
                 // Section Informasi Mutasi/Lokasi
-                Section::make('📍 Informasi Lokasi & Pemegang')
+                Section::make('Informasi Lokasi & Pemegang')
                     ->description('Data mutasi terakhir aset')
                     ->schema([
                         Grid::make([
@@ -146,7 +146,9 @@ class MonitoringAsetScanner extends Page implements HasForms
                                 ->label('Pemegang/Penanggung Jawab')
                                 ->content(fn() => new HtmlString(
                                     $this->getLatestMutation()
-                                        ? '<div class="flex items-center gap-2"><span class="inline-flex items-center justify-center w-8 h-8 bg-primary-100 text-primary-600 rounded-full"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg></span><span class="font-semibold">' . ($this->getLatestMutation()->AssetsMutationemployee?->name ?? 'Tidak ada data') . '</span></div>'
+                                        ? '<div class="flex items-center gap-2"><span class="font-semibold">' .
+                                        ($this->getLatestMutation()->AssetsMutationemployee?->name ?? 'Tidak ada data') .
+                                        '</span></div>'
                                         : '<span class="text-gray-400">Belum ada data mutasi</span>'
                                 )),
                             Placeholder::make('mutation_date')
@@ -163,7 +165,7 @@ class MonitoringAsetScanner extends Page implements HasForms
                                 ->label('Lokasi')
                                 ->content(fn() => new HtmlString(
                                     $this->getLatestMutation()
-                                        ? '<div class="flex items-center gap-2"><span class="inline-flex items-center justify-center w-8 h-8 bg-green-100 text-green-600 rounded-full"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></span><span class="font-semibold">' . ($this->getLatestMutation()->AssetsMutationlocation?->name ?? 'Tidak ada data') . '</span></div>'
+                                        ? '<div class="flex items-center gap-2"><span class="inline-flex items-center justify-center w-8 h-8 text-green-600 bg-green-100 rounded-full"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></span><span class="font-semibold">' . ($this->getLatestMutation()->AssetsMutationlocation?->name ?? 'Tidak ada data') . '</span></div>'
                                         : '<span class="text-gray-400">-</span>'
                                 )),
                             Placeholder::make('mutation_sub_location')
@@ -178,14 +180,14 @@ class MonitoringAsetScanner extends Page implements HasForms
                                 ->label('No. Mutasi')
                                 ->content(fn() => new HtmlString(
                                     $this->getLatestMutation()
-                                        ? '<code class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm">' . $this->getLatestMutation()->mutations_number . '</code>'
+                                        ? '<code class="px-2 py-1 text-sm bg-gray-100 rounded dark:bg-gray-700">' . $this->getLatestMutation()->mutations_number . '</code>'
                                         : '-'
                                 )),
                             Placeholder::make('mutation_status')
                                 ->label('Status Transaksi')
                                 ->content(fn() => new HtmlString(
                                     $this->getLatestMutation()?->transactionStatus
-                                        ? '<span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700">' . $this->getLatestMutation()->transactionStatus->name . '</span>'
+                                        ? '<span class="px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">' . $this->getLatestMutation()->transactionStatus->name . '</span>'
                                         : '-'
                                 )),
                         ]),
@@ -411,7 +413,7 @@ class MonitoringAsetScanner extends Page implements HasForms
             ->get();
 
         if ($histories->isEmpty()) {
-            return '<p class="text-gray-500 text-center py-4">Belum ada riwayat monitoring untuk aset ini.</p>';
+            return '<p class="py-4 text-center text-gray-500">Belum ada riwayat monitoring untuk aset ini.</p>';
         }
 
         $html = '<div class="space-y-3">';
@@ -467,7 +469,7 @@ class MonitoringAsetScanner extends Page implements HasForms
             ->get();
 
         if ($mutations->isEmpty()) {
-            return '<p class="text-gray-500 text-center py-4">Belum ada riwayat mutasi untuk aset ini.</p>';
+            return '<p class="py-4 text-center text-gray-500">Belum ada riwayat mutasi untuk aset ini.</p>';
         }
 
         $html = '<div class="space-y-3">';
@@ -536,7 +538,7 @@ class MonitoringAsetScanner extends Page implements HasForms
             ->get();
 
         if ($maintenances->isEmpty()) {
-            return '<p class="text-gray-500 text-center py-4">Belum ada riwayat pemeliharaan untuk aset ini.</p>';
+            return '<p class="py-4 text-center text-gray-500">Belum ada riwayat pemeliharaan untuk aset ini.</p>';
         }
 
         $html = '<div class="space-y-3">';
