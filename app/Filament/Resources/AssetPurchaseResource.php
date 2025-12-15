@@ -375,13 +375,20 @@ class AssetPurchaseResource extends Resource
                                 $quantity = $record->quantity;
                                 $bookValue = $data['book_value'] ?: $data['price'];
 
+                                // PENTING: Generate sequential number SEKALI sebelum loop
+                                // agar semua item dalam 1 permintaan mendapat nomor urut yang sama
+                                $purchaseDate = new \DateTime($data['purchase_date']);
+                                $sequentialNumber = AssetNumberGenerator::getYearlySequentialNumber($purchaseDate->format('Y'));
+
                                 for ($i = 1; $i <= $quantity; $i++) {
-                                    // Generate nomor aset
+                                    // Generate nomor aset dengan sequential number yang sudah dihitung
                                     $assetNumber = AssetNumberGenerator::generate(
                                         $record->category_id,
                                         $record->location_id,
                                         $data['purchase_date'],
-                                        $i
+                                        $i,
+                                        $sequentialNumber, // Gunakan sequential number yang SAMA untuk semua item!
+                                        $quantity
                                     );
 
                                     // 1. Simpan ke Asset Purchase
