@@ -87,4 +87,11 @@ class Asset extends Model
     {
         return $this->belongsTo(MasterAssetsTransactionStatus::class, 'transaction_status_id', 'id');
     }
+
+    // public function getLatestHolderAttribute()
+    // {
+    //     return $this->latestMutation?->AssetsMutationemployee?->name
+    //         ?? $this->latestMutation?->AssetsMutationlocation?->name
+    //         ?? 'Di Gudang';
+    // }
 }

@@ -6,6 +6,7 @@ use App\Models\AssetDisposal;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 class AssetDisposalStatsWidget extends BaseWidget
 {
@@ -13,57 +14,96 @@ class AssetDisposalStatsWidget extends BaseWidget
 
     protected function getStats(): array
     {
-        $currentMonth = Carbon::now()->month;
-        $currentYear = Carbon::now()->year;
+        return Cache::remember('asset_disposal_stats', 300, function () {
+            $now = Carbon::now();
 
-        // Penghapusan bulan ini
-        $disposalsThisMonth = AssetDisposal::whereMonth('disposal_date', $currentMonth)
-            ->whereYear('disposal_date', $currentYear)
-            ->count();
+            /**
+             * 🔥 SATU QUERY BESAR
+             */
+            $stats = AssetDisposal::query()
+                ->selectRaw('
+                    SUM(
+                        MONTH(disposal_date) = ?
+                        AND YEAR(disposal_date) = ?
+                    ) as disposals_this_month,
 
-        // Penghapusan tahun ini
-        $disposalsThisYear = AssetDisposal::whereYear('disposal_date', $currentYear)
-            ->count();
+                    SUM(
+                        YEAR(disposal_date) = ?
+                    ) as disposals_this_year,
 
-        // Total nilai buku tahun ini
-        $bookValueThisYear = AssetDisposal::whereYear('disposal_date', $currentYear)
-            ->sum('book_value');
+                    COALESCE(SUM(
+                        CASE
+                            WHEN YEAR(disposal_date) = ?
+                            THEN book_value
+                            ELSE 0
+                        END
+                    ), 0) as book_value_this_year,
 
-        // Total nilai disposal tahun ini
-        $disposalValueThisYear = AssetDisposal::whereYear('disposal_date', $currentYear)
-            ->sum('disposal_value');
+                    COALESCE(SUM(
+                        CASE
+                            WHEN YEAR(disposal_date) = ?
+                            THEN disposal_value
+                            ELSE 0
+                        END
+                    ), 0) as disposal_value_this_year
+                ', [
+                    $now->month,
+                    $now->year,
+                    $now->year,
+                    $now->year,
+                    $now->year,
+                ])
+                ->first();
 
-        // Dummy chart data (12 bulan terakhir) - bisa diganti real nanti
-        $monthlyChart = [1, 3, 2, 4, 2, 5, 3, 4, 6, 3, 4, $disposalsThisMonth];
+            /**
+             * 📊 Dummy chart (biar UI hidup)
+             */
+            $chart = [
+                1,
+                3,
+                2,
+                4,
+                2,
+                5,
+                3,
+                4,
+                6,
+                3,
+                4,
+                max(1, (int) $stats->disposals_this_month),
+            ];
 
-        return [
-            Stat::make('Penghapusan Bulan Ini', $disposalsThisMonth)
-                ->description(Carbon::now()->translatedFormat('F Y'))
-                ->descriptionIcon('heroicon-m-arrow-trending-up', 'before')
-                ->chart($monthlyChart)
-                ->color('primary')
-                ->icon('heroicon-o-trash'),
+            return [
+                Stat::make('Penghapusan Bulan Ini', $stats->disposals_this_month)
+                    ->description($now->translatedFormat('F Y'))
+                    ->chart($chart)
+                    ->color('primary')
+                    ->icon('heroicon-o-trash'),
 
-            Stat::make('Penghapusan Tahun Ini', $disposalsThisYear)
-                ->description('Tahun ' . $currentYear)
-                ->descriptionIcon('heroicon-m-arrow-trending-up', 'before')
-                ->chart($monthlyChart)
-                ->color('info')
-                ->icon('heroicon-o-calendar-days'),
+                Stat::make('Penghapusan Tahun Ini', $stats->disposals_this_year)
+                    ->description('Tahun ' . $now->year)
+                    ->chart($chart)
+                    ->color('info')
+                    ->icon('heroicon-o-calendar-days'),
 
-            Stat::make('Nilai Buku Tahun Ini', 'Rp ' . number_format($bookValueThisYear, 0, ',', '.'))
-                ->description('Total nilai aset yang dihapus tahun ' . $currentYear)
-                ->descriptionIcon('heroicon-m-arrow-trending-down', 'before')
-                ->chart($monthlyChart)
-                ->color('warning')
-                ->icon('heroicon-o-book-open'),
+                Stat::make(
+                    'Nilai Buku Tahun Ini',
+                    'Rp ' . number_format($stats->book_value_this_year, 0, ',', '.')
+                )
+                    ->description('Total nilai aset yang dihapus')
+                    ->chart($chart)
+                    ->color('warning')
+                    ->icon('heroicon-o-book-open'),
 
-            Stat::make('Pendapatan Disposal Tahun Ini', 'Rp ' . number_format($disposalValueThisYear, 0, ',', '.'))
-                ->description('Total nilai jual/penghapusan tahun ' . $currentYear)
-                ->descriptionIcon('heroicon-m-arrow-trending-up', 'before')
-                ->chart($monthlyChart)
-                ->color('success')
-                ->icon('heroicon-o-banknotes'),
-        ];
+                Stat::make(
+                    'Pendapatan Disposal Tahun Ini',
+                    'Rp ' . number_format($stats->disposal_value_this_year, 0, ',', '.')
+                )
+                    ->description('Total nilai jual aset')
+                    ->chart($chart)
+                    ->color('success')
+                    ->icon('heroicon-o-banknotes'),
+            ];
+        });
     }
 }

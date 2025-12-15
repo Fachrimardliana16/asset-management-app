@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use App\Models\Asset;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AssetMaintenance extends Model
 {
@@ -26,5 +28,10 @@ class AssetMaintenance extends Model
     public function AssetMaintenance()
     {
         return $this->belongsTo(Asset::class, 'assets_id', 'id');
+    }
+
+    public function asset(): BelongsTo
+    {
+        return $this->belongsTo(Asset::class, 'assets_id');
     }
 }

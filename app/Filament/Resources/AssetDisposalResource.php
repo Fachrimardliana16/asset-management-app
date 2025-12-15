@@ -162,16 +162,17 @@ class AssetDisposalResource extends Resource
                     ->label('No. Penghapusan')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('assetDisposals.assets_number')
+                Tables\Columns\TextColumn::make('asset.assets_number')
                     ->label('Aset')
-                    ->formatStateUsing(function ($record) {
-                        $disposal = $record->assetDisposals;
-                        return $disposal
-                            ? $disposal->assets_number . ' - ' . $disposal->name
-                            : '-';
-                    })
-                    ->searchable(['assetDisposals.assets_number', 'assetDisposals.name'])
+                    ->formatStateUsing(
+                        fn($record) =>
+                        $record->asset
+                            ? $record->asset->assets_number . ' - ' . $record->asset->name
+                            : '-'
+                    )
+                    ->searchable(['asset.assets_number', 'asset.name'])
                     ->wrap(),
+
                 Tables\Columns\TextColumn::make('book_value')
                     ->label('Nilai Buku')
                     ->money('IDR')
@@ -233,7 +234,7 @@ class AssetDisposalResource extends Resource
                         ->label('Cetak SK Penghapusan')
                         ->icon('heroicon-o-document-text')
                         ->color('success')
-                        ->url(fn ($record) => route('disposal.cetak-sk', $record->id))
+                        ->url(fn($record) => route('disposal.cetak-sk', $record->id))
                         ->openUrlInNewTab(),
                 ])
                     ->label('Actions')
@@ -260,5 +261,16 @@ class AssetDisposalResource extends Resource
             'create' => Pages\CreateAssetDisposal::route('/create'),
             'edit' => Pages\EditAssetDisposal::route('/{record}/edit'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with([
+                'asset',
+                'petugas',
+                'kepalaSubBagian',
+                'direktur',
+            ]);
     }
 }

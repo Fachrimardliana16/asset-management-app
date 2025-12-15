@@ -3,83 +3,119 @@
 namespace App\Filament\Resources\AssetResource\Widgets;
 
 use App\Models\Asset;
+use App\Models\MasterAssetsCondition;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 class AssetStatsWidget extends BaseWidget
 {
     protected static ?string $pollingInterval = null;
 
+    /**
+     * Ambil ID kondisi aset (dicache)
+     */
+    protected function getConditionIds(): array
+    {
+        return Cache::remember('asset_condition_ids', 3600, function () {
+            return MasterAssetsCondition::pluck('id', 'name')->toArray();
+        });
+    }
+
     protected function getStats(): array
     {
-        $currentYear = Carbon::now()->year;
+        return Cache::remember('asset_dashboard_stats', 300, function () {
+            $conditionIds = $this->getConditionIds();
 
-        // Total aset
-        $totalAssets = Asset::count();
+            // Pastikan key ada biar aman
+            $baik             = $conditionIds['Baik'] ?? null;
+            $rusak           = $conditionIds['Rusak'] ?? 0;
+            $perluPerbaikan  = $conditionIds['Perlu Perbaikan'] ?? 0;
 
-        // Total nilai buku saat ini
-        $totalBookValue = Asset::sum('book_value');
 
-        // Kondisi Baik
-        $goodCondition = Asset::whereHas('condition', fn($q) => $q->where('name', 'Baik'))->count();
+            /**
+             * SATU QUERY BESAR (hemat)
+             */
+            $stats = Asset::query()
+                ->selectRaw('
+                    COUNT(*) as total_assets,
+                    COALESCE(SUM(book_value), 0) as total_book_value,
+                    SUM(condition_id = ?) as good_condition,
+                    SUM(condition_id IN (?, ?)) as need_attention,
+                    SUM(
+                        book_value_expiry IS NOT NULL
+                        AND book_value_expiry BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 1 YEAR)
+                    ) as near_expiry
+                ', [
+                    $baik,
+                    $rusak,
+                    $perluPerbaikan,
+                ])
+                ->first();
 
-        // Kondisi perlu perhatian (Rusak / Perlu Perbaikan)
-        $needAttention = Asset::whereHas('condition', fn($q) => $q->whereIn('name', ['Rusak Ringan', 'Rusak Berat', 'Perlu Perbaikan']))->count();
+            /**
+             * Query terpisah (lebih aman & jelas)
+             */
+            $disposed = Asset::has('assetDisposals')->count();
 
-        // Aset mendekati akhir masa buku (dalam 12 bulan ke depan)
-        $nearExpiry = Asset::whereNotNull('book_value_expiry')
-            ->whereBetween('book_value_expiry', [now(), now()->addYear()])
-            ->count();
+            /**
+             * Chart dummy (opsional, biar UI hidup)
+             */
+            $chart = [
+                10,
+                15,
+                12,
+                18,
+                16,
+                20,
+                22,
+                25,
+                23,
+                28,
+                30,
+                max(1, (int) ($stats->total_assets / 10)),
+            ];
 
-        // Aset yang sudah disposed (punya record di assetDisposals)
-        $disposed = Asset::has('assetDisposals')->count();
+            return [
+                Stat::make('Total Aset', $stats->total_assets)
+                    ->description('Jumlah aset terdaftar')
+                    ->chart($chart)
+                    ->color('primary')
+                    ->icon('heroicon-o-archive-box'),
 
-        // Dummy chart data (bisa diganti real nanti)
-        $monthlyChart = [45, 52, 48, 60, 55, 68, 62, 75, 70, 78, 72, $totalAssets / 10]; // skala kecil biar chart kelihatan
+                Stat::make(
+                    'Total Nilai Buku',
+                    'Rp ' . number_format($stats->total_book_value, 0, ',', '.')
+                )
+                    ->description('Akumulasi nilai buku')
+                    ->chart($chart)
+                    ->color('success')
+                    ->icon('heroicon-o-banknotes'),
 
-        return [
-            Stat::make('Total Aset', $totalAssets)
-                ->description('Jumlah aset terdaftar')
-                ->descriptionIcon('heroicon-m-arrow-trending-up', 'before')
-                ->chart($monthlyChart)
-                ->color('primary')
-                ->icon('heroicon-o-archive-box'),
+                Stat::make('Kondisi Baik', $stats->good_condition)
+                    ->description('Aset siap pakai')
+                    ->chart($chart)
+                    ->color('success')
+                    ->icon('heroicon-o-check-circle'),
 
-            Stat::make('Total Nilai Buku', 'Rp ' . number_format($totalBookValue, 0, ',', '.'))
-                ->description('Akumulasi nilai buku saat ini')
-                ->descriptionIcon('heroicon-m-arrow-trending-down', 'before') // biasanya depreciasi
-                ->chart($monthlyChart)
-                ->color('success')
-                ->icon('heroicon-o-banknotes'),
+                Stat::make('Perlu Perhatian', $stats->need_attention)
+                    ->description('Rusak / perlu perbaikan')
+                    ->chart($chart)
+                    ->color('warning')
+                    ->icon('heroicon-o-exclamation-triangle'),
 
-            Stat::make('Kondisi Baik', $goodCondition)
-                ->description('Aset siap pakai')
-                ->descriptionIcon('heroicon-m-arrow-trending-up', 'before')
-                ->chart($monthlyChart)
-                ->color('success')
-                ->icon('heroicon-o-check-circle'),
+                Stat::make('Mendekati Expired Buku', $stats->near_expiry)
+                    ->description('Dalam 12 bulan')
+                    ->chart($chart)
+                    ->color('info')
+                    ->icon('heroicon-o-calendar'),
 
-            Stat::make('Perlu Perhatian', $needAttention)
-                ->description('Rusak atau perlu perbaikan')
-                ->descriptionIcon('heroicon-m-arrow-trending-up', 'before')
-                ->chart($monthlyChart)
-                ->color('warning')
-                ->icon('heroicon-o-exclamation-triangle'),
-
-            Stat::make('Mendekati Expired Buku', $nearExpiry)
-                ->description('Book value expiry dalam 12 bulan')
-                ->descriptionIcon('heroicon-m-clock', 'before')
-                ->chart($monthlyChart)
-                ->color('info')
-                ->icon('heroicon-o-calendar'),
-
-            Stat::make('Sudah Disposed', $disposed)
-                ->description('Aset dihapuskan / dijual')
-                ->descriptionIcon('heroicon-m-arrow-trending-down', 'before')
-                ->chart($monthlyChart)
-                ->color('danger')
-                ->icon('heroicon-o-trash'),
-        ];
+                Stat::make('Sudah Disposed', $disposed)
+                    ->description('Dihapuskan / dijual')
+                    ->chart($chart)
+                    ->color('danger')
+                    ->icon('heroicon-o-trash'),
+            ];
+        });
     }
 }
