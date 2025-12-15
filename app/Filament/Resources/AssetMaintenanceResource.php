@@ -115,13 +115,14 @@ class AssetMaintenanceResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('asset_info')
                     ->label('Aset')
-                    ->getStateUsing(
-                        fn($record) =>
-                        $record->asset
-                            ? $record->asset->assets_number . ' - ' . $record->asset->name
-                            : '-'
-                    )
-                    ->searchable(['asset.assets_number', 'asset.name'])
+                    ->getStateUsing(function ($record) {
+                        $maintenance = $record->AssetMaintenance;
+                        return $maintenance
+                            ? $maintenance->assets_number . ' - ' . $maintenance->name
+                            : '-';
+                    })
+                    ->searchable(['AssetMaintenance.assets_number', 'AssetMaintenance.name'])
+                    ->sortable() // opsional, jika ingin sortable berdasarkan salah satu field
                     ->wrap(),
                 Tables\Columns\TextColumn::make('service_type')
                     ->label('Jenis Perbaikan')
@@ -172,13 +173,13 @@ class AssetMaintenanceResource extends Resource
                         ->label('Cetak Kwitansi')
                         ->icon('heroicon-o-document-text')
                         ->color('success')
-                        ->url(fn($record) => route('maintenance.invoice', $record->id))
+                        ->url(fn ($record) => route('maintenance.invoice', $record->id))
                         ->openUrlInNewTab(),
                     Action::make('download_kwitansi')
                         ->label('Download Kwitansi')
                         ->icon('heroicon-o-arrow-down-tray')
                         ->color('info')
-                        ->url(fn($record) => route('maintenance.invoice.download', $record->id))
+                        ->url(fn ($record) => route('maintenance.invoice.download', $record->id))
                         ->openUrlInNewTab(),
                 ])
                     ->label('Actions')
@@ -207,11 +208,5 @@ class AssetMaintenanceResource extends Resource
             'create' => Pages\CreateAssetMaintenance::route('/create'),
             'edit' => Pages\EditAssetMaintenance::route('/{record}/edit'),
         ];
-    }
-
-    public static function getEloquentQuery(): Builder
-    {
-        return parent::getEloquentQuery()
-            ->with(['asset']);
     }
 }

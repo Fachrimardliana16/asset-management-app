@@ -22,8 +22,6 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
-
 
 class AssetPurchaseResource extends Resource
 {
@@ -77,57 +75,86 @@ class AssetPurchaseResource extends Resource
             ->columns([
                 // 1. No. DBP & Tanggal
                 TextColumn::make('document_number')
-                    ->label('No. DPB')
-                    ->description(fn($record) => $record->date?->format('d M Y'))
+                    ->label('Info DPB')
+                    ->html()
+                    ->formatStateUsing(fn($record) => new HtmlString(
+                        "<div class='font-medium'>{$record->document_number}</div>" .
+                            "<div class='mt-1 text-sm text-gray-600'>{$record->date->format('d M Y')}</div>"
+                    ))
                     ->searchable()
                     ->sortable(),
 
                 // 2. Barang (Nama Barang + Kategori + Jumlah)
                 TextColumn::make('asset_name')
-                    ->label('Barang')
-                    ->searchable()
-                    ->description(
-                        fn($record) => ($record->category?->name ?? '-') . ' • ' . $record->quantity . ' unit'
-                    )
-                    ->limit(40)
-                    ->wrap(),
+                    ->label('Detail Barang')
+                    ->html()
+                    ->formatStateUsing(fn($record) => new HtmlString(
+                        "<div class='font-medium'>{$record->asset_name}</div>" .
+
+                            // Baris kedua: Kategori (polos, tanpa badge)
+                            "<div class='mt-1 text-sm text-gray-600'>" .
+                            ($record->category?->name ?? '-') .
+                            "</div>" .
+
+                            // Baris ketiga: Quantity (polos, rata kiri lurus)
+                            "<div class='mt-1 text-sm text-gray-600'>" .
+                            "{$record->quantity} unit" .
+                            "</div>"
+                    ))
+                    ->searchable(['asset_name', 'category.name']),
 
                 // 3. Pemohon + Keperluan
                 TextColumn::make('employee.name')
-                    ->label('Pemohon')
-                    ->description(
-                        fn($record) =>
-                        Str::limit($record->purpose ?? '-', 50)
-                    )
+                    ->label('Pemohon & Keperluan')
+                    ->html()
+                    ->formatStateUsing(fn($record) => new HtmlString(
+                        "<div class='flex items-center gap-1 font-medium'>" .
+                            "<x-heroicon-m-user class='w-4 h-4 text-gray-600' />" .
+                            ($record->employee?->name ?? '-') .
+                            "</div>" .
+                            "<div class='mt-1 text-xs text-gray-600'>" .
+                            \Illuminate\Support\Str::limit($record->purpose ?? '', 60, '...') .
+                            "</div>"
+                    ))
                     ->tooltip(fn($record) => $record->purpose)
-                    ->searchable(),
+                    ->searchable(['employee.name', 'purpose']),
 
                 // 4. Lokasi + Sub Lokasi
                 TextColumn::make('location.name')
                     ->label('Lokasi')
-                    ->description(
-                        fn($record) =>
-                        $record->subLocation?->name
-                            ?? $record->masterAssetsSubLocation?->name
-                            ?? '-'
-                    )
-                    ->searchable(),
+                    ->html()
+                    ->formatStateUsing(fn($record) => new HtmlString(
+                        "<div class='flex items-center gap-1 font-medium'>" .
+                            "<x-heroicon-m-building-office-2 class='w-4 h-4 text-primary-600' />" .
+                            ($record->location?->name ?? '-') .
+                            "</div>" .
+                            "<div class='mt-1 text-xs text-gray-600'>" .
+                            ($record->subLocation?->name ?? $record->masterAssetsSubLocation?->name ?? '–') .
+                            "</div>"
+                    ))
+                    ->searchable(['location.name', 'subLocation.name']),
+
                 // 5. Total Harga (jika sudah dibeli)
                 TextColumn::make('total_harga')
-                    ->label('Total')
+                    ->label('Total Harga')
+                    ->html()
                     ->state(function ($record) {
                         if ($record->purchase_status === 'purchased' && $record->purchases->isNotEmpty()) {
-                            return $record->purchases->first()->price * $record->quantity;
+                            $purchase = $record->purchases->first();
+                            $totalPrice = $purchase->price * $record->quantity;
+                            return new HtmlString(
+                                "<div class='font-medium text-green-600'>" .
+                                    "Rp " . number_format($totalPrice, 0, ',', '.') .
+                                    "</div>" .
+                                    "<div class='mt-1 text-xs text-gray-500'>" .
+                                    "@Rp " . number_format($purchase->price, 0, ',', '.') . " × {$record->quantity} unit" .
+                                    "</div>"
+                            );
                         }
-                        return null;
-                    })
-                    ->money('IDR')
-                    ->description(
-                        fn($record) =>
-                        $record->purchase_status === 'purchased'
-                            ? 'Sudah dibeli'
-                            : 'Belum dibeli'
-                    ),
+                        return new HtmlString(
+                            "<div class='text-xs italic text-gray-400'>Belum dibeli</div>"
+                        );
+                    }),
 
                 Tables\Columns\TextColumn::make('purchase_status')
                     ->label('Status')
@@ -472,18 +499,5 @@ class AssetPurchaseResource extends Resource
             'index' => Pages\ListAssetPurchases::route('/'),
             'view' => Pages\ViewAssetPurchase::route('/{record}'),
         ];
-    }
-
-    public static function getEloquentQuery(): Builder
-    {
-        return parent::getEloquentQuery()
-            ->with([
-                'purchases',
-                'category',
-                'employee',
-                'location',
-                'subLocation',
-                'user',
-            ]);
     }
 }

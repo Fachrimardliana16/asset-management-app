@@ -41,7 +41,6 @@ class AdminPanelProvider extends PanelProvider
             ->databaseNotifications()->databaseNotificationsPolling('60s')
             ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
             ->sidebarCollapsibleOnDesktop()
-            ->globalSearch(false)
             ->navigationGroups([
 
                 NavigationGroup::make('Dokumen Aplikasi'),

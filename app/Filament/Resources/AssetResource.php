@@ -205,7 +205,6 @@ class AssetResource extends Resource
                 Tables\Columns\ImageColumn::make('img')
                     ->label('Gambar')
                     ->size(60)
-                    ->getStateUsing(fn($record) => $record->img[0] ?? null)
                     ->rounded()
                     ->defaultImageUrl(asset('images/no-image.png'))
                     ->extraImgAttributes(fn($record) => [
@@ -235,9 +234,18 @@ class AssetResource extends Resource
                     ->sortable(),
 
                 // 4. Pemegang / Lokasi Terakhir
-                Tables\Columns\TextColumn::make('latest_holder_sql')
+                Tables\Columns\TextColumn::make('latest_holder')
                     ->label('Pemegang')
-                    ->placeholder('Di Gudang'),
+                    ->getStateUsing(
+                        fn($record) =>
+                        $record->latestMutation?->AssetsMutationemployee?->name ??
+                            $record->latestMutation?->AssetsMutationlocation?->name ??
+                            'Di Gudang'
+                    )
+                    ->color(fn($state) => $state === 'Di Gudang' ? 'gray' : 'success')
+                    // ->italic(fn($state) => $state === 'Di Gudang')
+                    ->placeholder('-')
+                    ->limit(30),
 
                 // 5. Harga + Sumber Dana
                 Tables\Columns\TextColumn::make('price')
@@ -294,34 +302,20 @@ class AssetResource extends Resource
                         ->label('Mutasi Aset')
                         ->icon('heroicon-o-arrow-right-circle')
                         ->color('warning')
-                        ->action(function (Asset $record, array $data) {
-
-                            // VALIDASI DI SINI (AMAN)
+                        ->visible(function (Asset $record) {
+                            // Aset harus active
                             if (!in_array($record->assetsStatus?->name, ['Active', 'Aktif'])) {
-                                Notification::make()
-                                    ->warning()
-                                    ->title('Tidak bisa dimutasi')
-                                    ->body('Aset tidak dalam status aktif.')
-                                    ->send();
-
-                                return; // ⬅️ STOP action
+                                return false;
                             }
 
+                            // Cek apakah ada transaksi yang bisa dilakukan
                             $keluarCount = AssetMutation::where('assets_id', $record->id)
-                                ->whereHas(
-                                    'AssetsMutationtransactionStatus',
-                                    fn($q) => $q->where('name', 'Transaksi Keluar')
-                                )
+                                ->whereHas('AssetsMutationtransactionStatus', fn($q) => $q->where('name', 'Transaksi Keluar'))
                                 ->count();
 
                             $masukCount = AssetMutation::where('assets_id', $record->id)
-                                ->whereHas(
-                                    'AssetsMutationtransactionStatus',
-                                    fn($q) => $q->where('name', 'Transaksi Masuk')
-                                )
+                                ->whereHas('AssetsMutationtransactionStatus', fn($q) => $q->where('name', 'Transaksi Masuk'))
                                 ->count();
-
-                            $isCurrentlyOut = $keluarCount > $masukCount;
 
                             // Jika keluar > masuk, maka hanya bisa masuk
                             // Jika keluar <= masuk, maka hanya bisa keluar
@@ -663,7 +657,7 @@ class AssetResource extends Resource
                         ->action(function ($records) {
                             $ids = $records->pluck('id')->toArray();
                             $url = route('asset.print-barcode-bulk', ['ids' => implode(',', $ids)]);
-
+                            
                             // Open in new tab
                             return redirect()->to($url);
                         })
@@ -694,48 +688,18 @@ class AssetResource extends Resource
     /**
      * Add eager loading to prevent N+1 query issues
      */
-
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->select('assets.*')
-
-            // ✅ eager load relasi ringan
             ->with([
-                'categoryAsset:id,name',
-                'conditionAsset:id,name',
-                'assetsStatus:id,name',
-                'AssetTransactionStatus:id,name',
-            ])
-
-            // ✅ hitung keluar & masuk (tetap aman)
-            ->withCount([
-                'AssetsMutation as keluar_count' => fn($q) =>
-                $q->whereHas(
-                    'AssetsMutationtransactionStatus',
-                    fn($q) => $q->where('name', 'Transaksi Keluar')
-                ),
-
-                'AssetsMutation as masuk_count' => fn($q) =>
-                $q->whereHas(
-                    'AssetsMutationtransactionStatus',
-                    fn($q) => $q->where('name', 'Transaksi Masuk')
-                ),
-            ])
-
-            // 🚀 ambil pemegang terakhir TANPA N+1
-            ->selectSub(
-                DB::table('assets_mutation as am')
-                    ->leftJoin('employees', 'employees.id', '=', 'am.employees_id')
-                    ->whereColumn('am.assets_id', 'assets.id')
-                    ->orderByDesc('am.created_at')
-                    ->limit(1)
-                    ->select('employees.name'),
-                'latest_holder_sql'
-            );
+                'categoryAsset',
+                'conditionAsset',
+                'assetsStatus',
+                'AssetTransactionStatus',
+                'latestMutation.AssetsMutationemployee',
+                'latestMutation.AssetsMutationlocation',
+            ]);
     }
-
-
 
     protected function getRedirectUrl(): string
     {

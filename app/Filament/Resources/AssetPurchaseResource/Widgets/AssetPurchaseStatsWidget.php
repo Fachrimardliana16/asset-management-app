@@ -6,85 +6,68 @@ use App\Models\AssetPurchase;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Cache;
 
 class AssetPurchaseStatsWidget extends BaseWidget
 {
     protected static ?string $pollingInterval = null;
 
+    // Optional: biar widget lebih lebar di dashboard
+    // protected int | string | array $columnSpan = 'full';
+
     protected function getStats(): array
     {
-        return Cache::remember('asset_purchase_dashboard_stats', 300, function () {
-            $now = now();
+        $currentMonth = Carbon::now()->month;
+        $currentYear = Carbon::now()->year;
 
-            $stats = AssetPurchase::query()
-                ->selectRaw('
-                    SUM(
-                        MONTH(purchase_date) = ?
-                        AND YEAR(purchase_date) = ?
-                    ) AS purchases_this_month,
+        // Pembelian bulan ini
+        $purchasesThisMonth = AssetPurchase::whereMonth('purchase_date', $currentMonth)
+            ->whereYear('purchase_date', $currentYear)
+            ->count();
 
-                    SUM(YEAR(purchase_date) = ?) AS purchases_this_year,
+        // Pembelian tahun ini
+        $purchasesThisYear = AssetPurchase::whereYear('purchase_date', $currentYear)
+            ->count();
 
-                    SUM(
-                        CASE
-                            WHEN MONTH(purchase_date) = ?
-                            AND YEAR(purchase_date) = ?
-                            THEN price
-                            ELSE 0
-                        END
-                    ) AS value_this_month,
+        // Total nilai pembelian bulan ini
+        $valueThisMonth = AssetPurchase::whereMonth('purchase_date', $currentMonth)
+            ->whereYear('purchase_date', $currentYear)
+            ->sum('price');
 
-                    SUM(
-                        CASE
-                            WHEN YEAR(purchase_date) = ?
-                            THEN price
-                            ELSE 0
-                        END
-                    ) AS value_this_year
-                ', [
-                    $now->month,
-                    $now->year,
-                    $now->year,
-                    $now->month,
-                    $now->year,
-                    $now->year,
-                ])
-                ->first();
+        // Total nilai pembelian tahun ini
+        $valueThisYear = AssetPurchase::whereYear('purchase_date', $currentYear)
+            ->sum('price');
 
-            $chart = [8, 12, 10, 15, 9, 18, 14, 22, 16, 20, 18, max(1, (int) $stats->purchases_this_month)];
+        // Dummy chart data (12 bulan) - bisa diganti real nanti jika diperlukan
+        $monthlyChart = [8, 12, 10, 15, 9, 18, 14, 22, 16, 20, 18, $purchasesThisMonth];
 
-            return [
-                Stat::make('Pembelian Bulan Ini', (int) $stats->purchases_this_month)
-                    ->description($now->translatedFormat('F Y'))
-                    ->chart($chart)
-                    ->color('primary')
-                    ->icon('heroicon-o-shopping-bag'),
+        return [
+            Stat::make('Pembelian Bulan Ini', $purchasesThisMonth)
+                ->description(Carbon::now()->translatedFormat('F Y'))
+                ->descriptionIcon('heroicon-m-arrow-trending-up', 'before')
+                ->chart($monthlyChart)
+                ->color('primary')
+                ->icon('heroicon-o-shopping-bag'),
 
-                Stat::make('Total Pembelian Tahun Ini', (int) $stats->purchases_this_year)
-                    ->description('Tahun ' . $now->year)
-                    ->chart($chart)
-                    ->color('info')
-                    ->icon('heroicon-o-calendar-days'),
+            Stat::make('Total Pembelian Tahun Ini', $purchasesThisYear)
+                ->description('Tahun ' . $currentYear)
+                ->descriptionIcon('heroicon-m-arrow-trending-up', 'before')
+                ->chart($monthlyChart)
+                ->color('info')
+                ->icon('heroicon-o-calendar-days'),
 
-                Stat::make(
-                    'Nilai Pembelian Bulan Ini',
-                    'Rp ' . number_format($stats->value_this_month, 0, ',', '.')
-                )
-                    ->description('Pengeluaran bulan ini')
-                    ->chart($chart)
-                    ->color('success')
-                    ->icon('heroicon-o-banknotes'),
+            Stat::make('Nilai Pembelian Bulan Ini', 'Rp ' . number_format($valueThisMonth, 0, ',', '.'))
+                ->description('Pengeluaran bulan ini')
+                ->descriptionIcon('heroicon-m-arrow-trending-up', 'before')
+                ->chart($monthlyChart)
+                ->color('success')
+                ->icon('heroicon-o-banknotes'),
 
-                Stat::make(
-                    'Total Nilai Tahun Ini',
-                    'Rp ' . number_format($stats->value_this_year, 0, ',', '.')
-                )
-                    ->description('Akumulasi pengeluaran')
-                    ->chart($chart)
-                    ->color('warning')
-                    ->icon('heroicon-o-currency-dollar'),
-            ];
-        });
+            Stat::make('Total Nilai Tahun Ini', 'Rp ' . number_format($valueThisYear, 0, ',', '.'))
+                ->description('Akumulasi pengeluaran tahun ' . $currentYear)
+                ->descriptionIcon('heroicon-m-arrow-trending-up', 'before')
+                ->chart($monthlyChart)
+                ->color('warning')
+                ->icon('heroicon-o-currency-dollar'),
+        ];
     }
 }

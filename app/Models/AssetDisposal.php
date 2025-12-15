@@ -4,8 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Asset;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 
 class AssetDisposal extends Model
@@ -34,11 +33,6 @@ class AssetDisposal extends Model
     public function assetDisposals()
     {
         return $this->belongsTo(Asset::class, 'assets_id', 'id');
-    }
-
-    public function asset(): BelongsTo
-    {
-        return $this->belongsTo(Asset::class, 'assets_id');
     }
 
     /**
