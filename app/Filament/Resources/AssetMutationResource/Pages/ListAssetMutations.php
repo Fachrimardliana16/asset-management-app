@@ -72,7 +72,7 @@ class ListAssetMutations extends ListRecords
                     return redirect()->to(route('export.asset-mutation') . '?' . $params);
                 }),
 
-            Actions\CreateAction::make(),
+            // Actions\CreateAction::make(),
         ];
     }
 
