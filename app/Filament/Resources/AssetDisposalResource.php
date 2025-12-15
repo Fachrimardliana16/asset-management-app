@@ -96,13 +96,37 @@ class AssetDisposalResource extends Resource
                             ])->columns(1)->collapsible(),
                         Forms\Components\Section::make('Persetujuan')
                             ->schema([
-                                Forms\Components\Select::make('employee_id')
-                                    ->relationship('employeeDisposals', 'name')
-                                    ->label('Pejabat yang Mengetahui/Menyetujui')
-                                    ->searchable()
-                                    ->preload()
-                                    ->required()
-                                    ->helperText('Pegawai yang berwenang menyetujui penghapusan'),
+                                Forms\Components\Grid::make(3)->schema([
+                                    Forms\Components\Select::make('petugas_id')
+                                        ->relationship('petugas', 'name')
+                                        ->label('Petugas')
+                                        ->searchable()
+                                        ->preload()
+                                        ->required()
+                                        ->helperText('Petugas yang membuat penghapusan'),
+                                    Forms\Components\Select::make('kepala_sub_bagian_id')
+                                        ->relationship(
+                                            'kepalaSubBagian',
+                                            'name',
+                                            fn($query) => $query->whereHas('position', fn($q) => $q->where('name', 'like', '%Kepala Sub Bagian%'))
+                                        )
+                                        ->label('Kepala Sub Bagian Kerumahtanggaan')
+                                        ->searchable()
+                                        ->preload()
+                                        ->required()
+                                        ->helperText('Kepala Sub Bagian yang menyetujui'),
+                                    Forms\Components\Select::make('direktur_id')
+                                        ->relationship(
+                                            'direktur',
+                                            'name',
+                                            fn($query) => $query->whereHas('position', fn($q) => $q->where('name', 'like', '%Direksi%')->orWhere('name', 'like', '%Direktur%'))
+                                        )
+                                        ->label('Direktur')
+                                        ->searchable()
+                                        ->preload()
+                                        ->required()
+                                        ->helperText('Direktur yang mengetahui'),
+                                ]),
                                 Forms\Components\Textarea::make('disposal_notes')
                                     ->label('Catatan Penghapusan')
                                     ->rows(2)
@@ -172,9 +196,17 @@ class AssetDisposalResource extends Resource
                     ->wrap()
                     ->limit(50)
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('employeeDisposals.name')
-                    ->label('Disetujui Oleh')
+                Tables\Columns\TextColumn::make('petugas.name')
+                    ->label('Petugas')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('kepalaSubBagian.name')
+                    ->label('Kepala Sub Bagian')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('direktur.name')
+                    ->label('Direktur')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Dibuat')
                     ->dateTime('d/m/Y H:i')
