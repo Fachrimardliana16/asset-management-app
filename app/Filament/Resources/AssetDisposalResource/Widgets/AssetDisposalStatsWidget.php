@@ -16,38 +16,52 @@ class AssetDisposalStatsWidget extends BaseWidget
         $currentMonth = Carbon::now()->month;
         $currentYear = Carbon::now()->year;
 
-        // Total penghapusan
-        $totalDisposals = AssetDisposal::count();
-
         // Penghapusan bulan ini
         $disposalsThisMonth = AssetDisposal::whereMonth('disposal_date', $currentMonth)
             ->whereYear('disposal_date', $currentYear)
             ->count();
 
-        // Total nilai buku yang dihapus
-        $totalBookValue = AssetDisposal::sum('book_value');
+        // Penghapusan tahun ini
+        $disposalsThisYear = AssetDisposal::whereYear('disposal_date', $currentYear)
+            ->count();
 
-        // Total nilai jual/disposal
-        $totalDisposalValue = AssetDisposal::sum('disposal_value');
+        // Total nilai buku tahun ini
+        $bookValueThisYear = AssetDisposal::whereYear('disposal_date', $currentYear)
+            ->sum('book_value');
+
+        // Total nilai disposal tahun ini
+        $disposalValueThisYear = AssetDisposal::whereYear('disposal_date', $currentYear)
+            ->sum('disposal_value');
+
+        // Dummy chart data (12 bulan terakhir) - bisa diganti real nanti
+        $monthlyChart = [1, 3, 2, 4, 2, 5, 3, 4, 6, 3, 4, $disposalsThisMonth];
 
         return [
-            Stat::make('Total Penghapusan', $totalDisposals)
-                ->description('Semua aset dihapuskan')
+            Stat::make('Penghapusan Bulan Ini', $disposalsThisMonth)
+                ->description(Carbon::now()->translatedFormat('F Y'))
+                ->descriptionIcon('heroicon-m-arrow-trending-up', 'before')
+                ->chart($monthlyChart)
                 ->color('primary')
                 ->icon('heroicon-o-trash'),
 
-            Stat::make('Penghapusan Bulan Ini', $disposalsThisMonth)
-                ->description(Carbon::now()->translatedFormat('F Y'))
+            Stat::make('Penghapusan Tahun Ini', $disposalsThisYear)
+                ->description('Tahun ' . $currentYear)
+                ->descriptionIcon('heroicon-m-arrow-trending-up', 'before')
+                ->chart($monthlyChart)
                 ->color('info')
-                ->icon('heroicon-o-calendar'),
+                ->icon('heroicon-o-calendar-days'),
 
-            Stat::make('Total Nilai Buku', 'Rp ' . number_format($totalBookValue, 0, ',', '.'))
-                ->description('Akumulasi nilai buku')
+            Stat::make('Nilai Buku Tahun Ini', 'Rp ' . number_format($bookValueThisYear, 0, ',', '.'))
+                ->description('Total nilai aset yang dihapus tahun ' . $currentYear)
+                ->descriptionIcon('heroicon-m-arrow-trending-down', 'before')
+                ->chart($monthlyChart)
                 ->color('warning')
-                ->icon('heroicon-o-document-text'),
+                ->icon('heroicon-o-book-open'),
 
-            Stat::make('Total Nilai Disposal', 'Rp ' . number_format($totalDisposalValue, 0, ',', '.'))
-                ->description('Akumulasi nilai jual')
+            Stat::make('Pendapatan Disposal Tahun Ini', 'Rp ' . number_format($disposalValueThisYear, 0, ',', '.'))
+                ->description('Total nilai jual/penghapusan tahun ' . $currentYear)
+                ->descriptionIcon('heroicon-m-arrow-trending-up', 'before')
+                ->chart($monthlyChart)
                 ->color('success')
                 ->icon('heroicon-o-banknotes'),
         ];
