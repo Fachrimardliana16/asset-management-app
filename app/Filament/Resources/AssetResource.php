@@ -26,6 +26,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
+use Filament\Notifications\Actions\Action as NotificationAction;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
@@ -430,9 +431,9 @@ class AssetResource extends Resource
                                 $transactionStatusId = MasterAssetsTransactionStatus::where('name', 'Transaksi Keluar')->first()?->id;
                             }
 
-                            DB::transaction(function () use ($record, $data, $transactionStatusId) {
+                            $newMutation = DB::transaction(function () use ($record, $data, $transactionStatusId) {
                                 // Simpan ke tabel asset_mutations
-                                AssetMutation::create([
+                                $mutation = AssetMutation::create([
                                     'mutations_number' => $data['mutations_number'],
                                     'mutation_date' => $data['mutation_date'],
                                     'transaction_status_id' => $transactionStatusId,
@@ -451,6 +452,8 @@ class AssetResource extends Resource
                                 $record->update([
                                     'transaction_status_id' => $transactionStatusId
                                 ]);
+
+                                return $mutation;
                             });
 
                             $transactionType = $isCurrentlyOut ? 'Masuk' : 'Keluar';
@@ -460,13 +463,13 @@ class AssetResource extends Resource
                                 ->title('Sukses!')
                                 ->body("Aset berhasil dimutasi (Transaksi {$transactionType}).")
                                 ->actions([
-                                    Action::make('cetak_doc')
+                                    NotificationAction::make('cetak_doc')
                                         ->label('Cetak Doc Serah Terima')
-                                        ->icon('heroicon-o-printer')           // ikon printer (opsional, tapi bagus)
-                                        ->button()                             // bikin tombol lebih menonjol (primary style)
-                                        ->color('primary')                     // warna biru (bisa diganti 'success', 'warning', dll)
-                                        ->url(route('assets.cetak-serah-terima', $record->id))  // GANTI dengan route cetak kamu
-                                        ->openUrlInNewTab(),                   // buka di tab baru (biar user tetap di halaman Filament)
+                                        ->icon('heroicon-o-printer')
+                                        ->button()
+                                        ->color('primary')
+                                        ->url(route('assets.cetak-serah-terima', $newMutation->id))
+                                        ->openUrlInNewTab(),
                                 ])
                                 ->send();
                         })

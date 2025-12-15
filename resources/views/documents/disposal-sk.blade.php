@@ -258,18 +258,18 @@
         <div class="signature-container">
             <!-- Petugas / Pembuat -->
             <div class="signature-box" style="width: 48%; display: inline-block; vertical-align: top;">
-                <div class="signature-title">PETUGAS</div>
+                <div class="signature-title"><br>PETUGAS</div>
                 <div class="signature-space"></div>
-                <div class="signature-name">(........................)</div>
-                <div class="signature-position">Petugas Administrasi</div>
+                <div class="signature-name">({{ $disposal->petugas->name ?? '........................' }})</div>
+                <!-- <div class="signature-position">{{ $disposal->petugas->position->name ?? 'Petugas Administrasi' }}</div> -->
             </div>
 
             <!-- Kepala Sub Bagian Kerumahtanggaan -->
             <div class="signature-box" style="width: 48%; display: inline-block; vertical-align: top;">
-                <div class="signature-title">KEPALA SUB BAGIAN<br>KERUMAHTANGGAAN</div>
+                <div class="signature-title">DISETUJUI OLEH<br>KEPALA SUB BAGIAN KERUMAHTANGGAAN</div>
                 <div class="signature-space"></div>
-                <div class="signature-name">(........................)</div>
-                <div class="signature-position">Kepala Sub Bagian Kerumahtanggaan</div>
+                <div class="signature-name">({{ $disposal->kepalaSubBagian->name ?? '........................' }})</div>
+                <!-- <div class="signature-position">{{ $disposal->kepalaSubBagian->position->name ?? 'Kepala Sub Bagian Kerumahtanggaan' }}</div> -->
             </div>
         </div>
 
@@ -278,8 +278,8 @@
             <div class="signature-box" style="width: 48%; display: inline-block;">
                 <div class="signature-title">MENGETAHUI<br>DIREKTUR</div>
                 <div class="signature-space"></div>
-                <div class="signature-name">(........................)</div>
-                <div class="signature-position">Direktur PDAM</div>
+                <div class="signature-name">({{ $disposal->direktur->name ?? '........................' }})</div>
+                <!-- <div class="signature-position">{{ $disposal->direktur->position->name ?? 'Direktur PDAM' }}</div> -->
             </div>
         </div>
     </div>
