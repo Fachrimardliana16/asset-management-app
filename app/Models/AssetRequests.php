@@ -15,13 +15,10 @@ class AssetRequests extends Model
     protected $fillable = [
         'document_number',
         'date',
-        'asset_name',
-        'category_id',
-        'employee_id',
-        'location_id',
-        'sub_location_id',
-        'quantity',
-        'purpose',
+        'total_items',
+        'total_quantity',
+        'department_id',
+        'requested_by',
         'desc',
         'kepala_sub_bagian',
         'kepala_bagian_umum',
@@ -45,39 +42,60 @@ class AssetRequests extends Model
         'direktur_umum' => 'boolean',
         'direktur_utama' => 'boolean',
         'status_request' => 'boolean',
+        'total_items' => 'integer',
+        'total_quantity' => 'integer',
     ];
 
-    public function category()
+    /**
+     * Relasi ke Items (Detail)
+     */
+    public function items()
     {
-        return $this->belongsTo(MasterAssetsCategory::class, 'category_id');
+        return $this->hasMany(AssetRequestItem::class, 'asset_request_id');
     }
 
-    public function employee()
+    /**
+     * Relasi ke Department
+     */
+    public function department()
     {
-        return $this->belongsTo(Employee::class, 'employee_id');
+        return $this->belongsTo(MasterDepartments::class, 'department_id');
     }
 
-    public function location()
+    /**
+     * Relasi ke User Pemohon
+     */
+    public function requestedBy()
     {
-        return $this->belongsTo(MasterAssetsLocation::class, 'location_id');
+        return $this->belongsTo(User::class, 'requested_by');
     }
 
-    public function subLocation()
-    {
-        return $this->belongsTo(MasterAssetsSubLocation::class, 'sub_location_id');
-    }
-
+    /**
+     * Relasi ke User Pembuat
+     */
     public function user()
     {
         return $this->belongsTo(User::class, 'users_id');
     }
 
+    /**
+     * Relasi ke Purchases (melalui items)
+     */
     public function purchases()
     {
-        return $this->hasMany(AssetPurchase::class, 'assetrequest_id');
+        return $this->hasManyThrough(
+            AssetPurchase::class,
+            AssetRequestItem::class,
+            'asset_request_id', // FK di asset_request_items
+            'asset_request_item_id', // FK di asset_purchases
+            'id', // PK di assets_requests
+            'id' // PK di asset_request_items
+        );
     }
 
-    // Helper untuk mendapatkan label status
+    /**
+     * Helper untuk mendapatkan label status
+     */
     public function getPurchaseStatusLabelAttribute(): string
     {
         return match ($this->purchase_status) {
@@ -89,7 +107,9 @@ class AssetRequests extends Model
         };
     }
 
-    // Helper untuk mendapatkan warna badge
+    /**
+     * Helper untuk mendapatkan warna badge
+     */
     public function getPurchaseStatusColorAttribute(): string
     {
         return match ($this->purchase_status) {
@@ -100,4 +120,47 @@ class AssetRequests extends Model
             default => 'warning',
         };
     }
+
+    /**
+     * Helper untuk menghitung total items setelah update
+     */
+    public function updateTotals(): void
+    {
+        $this->update([
+            'total_items' => $this->items()->count(),
+            'total_quantity' => $this->items()->sum('quantity'),
+        ]);
+    }
+
+    /**
+     * Helper untuk cek apakah semua item sudah dibeli lengkap
+     */
+    public function isAllItemsPurchased(): bool
+    {
+        $totalItems = $this->items()->count();
+        if ($totalItems === 0) {
+            return false;
+        }
+
+        $completedItems = $this->items()->get()->filter(function ($item) {
+            return $item->isPurchasedComplete();
+        })->count();
+
+        return $completedItems === $totalItems;
+    }
+
+    /**
+     * Helper untuk progress pembelian (%)
+     */
+    public function getPurchaseProgressAttribute(): int
+    {
+        $totalQuantity = $this->total_quantity;
+        if ($totalQuantity === 0) {
+            return 0;
+        }
+
+        $purchasedQuantity = $this->purchases()->count();
+        return (int) min(100, ($purchasedQuantity / $totalQuantity) * 100);
+    }
 }
+

@@ -22,6 +22,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Register Observers
+        \App\Models\AssetRequestItem::observe(\App\Observers\AssetRequestItemObserver::class);
+
         Table::configureUsing(function (Table $table): void {
             $table
                 ->emptyStateHeading('No data yet')
