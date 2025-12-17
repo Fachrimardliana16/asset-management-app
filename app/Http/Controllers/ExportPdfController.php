@@ -54,36 +54,93 @@ class ExportPdfController extends Controller
 
     public function asset(Request $request)
     {
-        $query = Asset::with(['categoryAsset', 'conditionAsset', 'assetsStatus', 'latestMutation.AssetsMutationlocation', 'latestMutation.AssetsMutationsubLocation']);
+        /**
+         * ========================
+         * BASE QUERY (SUMBER UTAMA)
+         * ========================
+         * Jangan pakai with() & orderBy di sini
+         */
+        $baseQuery = Asset::query();
 
+        // ========================
+        // FILTER
+        // ========================
         if ($request->start_date && $request->end_date) {
-            $query->whereBetween('purchase_date', [$request->start_date, $request->end_date]);
+            $baseQuery->whereBetween('purchase_date', [
+                $request->start_date,
+                $request->end_date
+            ]);
         }
 
         if ($request->condition) {
-            $query->where('condition_id', $request->condition);
+            $baseQuery->where('condition_id', $request->condition);
         }
 
         if ($request->status) {
-            $query->where('status_id', $request->status);
+            $baseQuery->where('status_id', $request->status);
         }
 
         if ($request->location) {
-            $query->whereHas('latestMutation', function ($q) use ($request) {
+            $baseQuery->whereHas('latestMutation', function ($q) use ($request) {
                 $q->where('location_id', $request->location);
             });
         }
 
         if ($request->sub_location) {
-            $query->whereHas('latestMutation', function ($q) use ($request) {
+            $baseQuery->whereHas('latestMutation', function ($q) use ($request) {
                 $q->where('sub_location_id', $request->sub_location);
             });
         }
 
-        $data = $query->orderBy('purchase_date', 'desc')->get();
+        // ========================
+        // DATA UTAMA (TABEL BESAR)
+        // ========================
+        $data = (clone $baseQuery)
+            ->with([
+                'categoryAsset',
+                'conditionAsset',
+                'assetsStatus',
+                'latestMutation.AssetsMutationlocation',
+                'latestMutation.AssetsMutationsubLocation'
+            ])
+            ->orderBy('purchase_date', 'desc')
+            ->get();
 
+        // ========================
+        // SUMMARY PER KATEGORI
+        // ========================
+        $summaryCategory = (clone $baseQuery)
+            ->join('master_assets_category', 'assets.category_id', '=', 'master_assets_category.id')
+            ->selectRaw('master_assets_category.name AS category_name, COUNT(*) AS total')
+            ->groupBy('master_assets_category.name')
+            ->get();
+
+        // ========================
+        // SUMMARY PER KONDISI
+        // ========================
+        $summaryCondition = (clone $baseQuery)
+            ->join('master_assets_condition', 'assets.condition_id', '=', 'master_assets_condition.id')
+            ->selectRaw('master_assets_condition.name AS condition_name, COUNT(*) AS total')
+            ->groupBy('master_assets_condition.name')
+            ->get();
+
+        // ========================
+        // SUMMARY PER STATUS
+        // ========================
+        $summaryStatus = (clone $baseQuery)
+            ->join('master_assets_status', 'assets.status_id', '=', 'master_assets_status.id')
+            ->selectRaw('master_assets_status.name AS status_name, COUNT(*) AS total')
+            ->groupBy('master_assets_status.name')
+            ->get();
+
+        // ========================
+        // PDF
+        // ========================
         $pdf = Pdf::loadView('exports.asset', [
             'data' => $data,
+            'summaryCategory' => $summaryCategory,
+            'summaryCondition' => $summaryCondition,
+            'summaryStatus' => $summaryStatus,
             'startDate' => $request->start_date,
             'endDate' => $request->end_date,
             'condition' => $request->condition,
@@ -94,6 +151,8 @@ class ExportPdfController extends Controller
 
         return $pdf->download('laporan-data-aset.pdf');
     }
+
+
 
     public function assetMonitoring(Request $request)
     {
