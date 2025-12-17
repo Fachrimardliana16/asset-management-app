@@ -233,20 +233,10 @@ class AssetRequestsResource extends Resource
                 // 2. Barang (Nama Barang + Kategori + Jumlah)
                 TextColumn::make('asset_name')
                     ->label('Detail Barang')
-                    ->html()
-                    ->formatStateUsing(fn($record) => new HtmlString(
-                        "<div class='font-medium'>{$record->asset_name}</div>" .
-
-                            // Baris kedua: Kategori (polos, tanpa badge)
-                            "<div class='mt-1 text-sm text-gray-600'>" .
-                            ($record->category?->name ?? '-') .
-                            "</div>" .
-
-                            // Baris ketiga: Quantity (polos, rata kiri lurus)
-                            "<div class='mt-1 text-sm text-gray-600'>" .
-                            "{$record->quantity} unit" .
-                            "</div>"
-                    ))
+                    ->description(
+                        fn($record) => ($record->category?->name ?? '-') . "\n" .
+                            $record->quantity . ' unit'
+                    )
                     ->searchable(['asset_name', 'category.name']),
 
                 // Pegawai/Pemohon
