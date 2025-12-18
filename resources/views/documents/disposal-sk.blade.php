@@ -168,7 +168,7 @@
         <div>
             <p class="company-name">Perusahaan Umum Daerah Air Minum</p>
             <p class="company-subtitle">Tirta Perwira Kabupaten Purbalingga</p>
-            <p class="company-address">Jl. Letjen S. Parman No.1, Purbalingga</p>
+            <p class="company-address">Jl. Letnan Jenderal S Parman No.62, Kedung Menjangan, Bancar, Kec. Purbalingga, Kabupaten Purbalingga, Jawa Tengah 53316</p>
         </div>
     </div>
 

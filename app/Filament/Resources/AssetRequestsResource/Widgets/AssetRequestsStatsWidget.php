@@ -9,63 +9,71 @@ use Carbon\Carbon;
 
 class AssetRequestsStatsWidget extends BaseWidget
 {
-    protected static ?string $pollingInterval = null;
-
-    // Optional: biar widget lebih lebar dan enak dilihat di dashboard
-    // protected int | string | array $columnSpan = 'full';
+    public function getPollingInterval(): ?string
+    {
+        return null;
+    }
 
     protected function getStats(): array
     {
-        $currentMonth = Carbon::now()->month;
-        $currentYear = Carbon::now()->year;
+        $now = Carbon::now();
 
-        // Permintaan bulan ini
-        $requestsThisMonth = AssetRequests::whereMonth('date', $currentMonth)
-            ->whereYear('date', $currentYear)
-            ->count();
+        $startOfMonth = $now->copy()->startOfMonth();
+        $endOfMonth   = $now->copy()->endOfMonth();
 
-        // Total permintaan tahun ini
-        $requestsThisYear = AssetRequests::whereYear('date', $currentYear)
-            ->count();
+        $startOfYear = $now->copy()->startOfYear();
+        $endOfYear   = $now->copy()->endOfYear();
 
-        // Permintaan belum dibeli tahun ini (pending / in_progress)
-        $notPurchasedThisYear = AssetRequests::whereYear('date', $currentYear)
-            ->whereIn('purchase_status', ['pending', 'in_progress'])
-            ->count();
+        // Satu query untuk semua data tahun ini + bulan ini
+        $aggregates = AssetRequests::query()
+            ->selectRaw('COUNT(*) as total_all')
+            ->selectRaw('COUNT(CASE WHEN date >= ? AND date <= ? THEN 1 END) as total_this_month', [$startOfMonth, $endOfMonth])
+            ->selectRaw('COUNT(CASE WHEN date >= ? AND date <= ? THEN 1 END) as total_this_year', [$startOfYear, $endOfYear])
+            ->selectRaw('COUNT(CASE WHEN date >= ? AND date <= ? AND purchase_status IN ("pending", "in_progress") THEN 1 END) as not_purchased_this_year', [$startOfYear, $endOfYear])
+            ->selectRaw('COUNT(CASE WHEN date >= ? AND date <= ? AND purchase_status = "purchased" THEN 1 END) as purchased_this_year', [$startOfYear, $endOfYear])
+            ->first();
 
-        // Permintaan sudah dibeli tahun ini
-        $purchasedThisYear = AssetRequests::whereYear('date', $currentYear)
-            ->where('purchase_status', 'purchased')
-            ->count();
-
-        // Dummy chart data (12 bulan) - bisa diganti real nanti
-        $monthlyChart = [12, 18, 15, 22, 16, 25, 20, 28, 24, 30, 26, $requestsThisMonth];
+        // Dummy chart (bisa diganti real data nanti)
+        $monthlyChart = [
+            12,
+            18,
+            15,
+            22,
+            16,
+            25,
+            20,
+            28,
+            24,
+            30,
+            26,
+            $aggregates->total_this_month,
+        ];
 
         return [
-            Stat::make('Permintaan Bulan Ini', $requestsThisMonth)
-                ->description(Carbon::now()->translatedFormat('F Y'))
-                ->descriptionIcon('heroicon-m-arrow-trending-up', 'before')
+            Stat::make('Permintaan Bulan Ini', $aggregates->total_this_month)
+                ->description($now->translatedFormat('F Y'))
+                ->descriptionIcon('heroicon-m-calendar', 'before')
                 ->chart($monthlyChart)
                 ->color('primary')
                 ->icon('heroicon-o-clipboard-document-list'),
 
-            Stat::make('Total Permintaan Tahun Ini', $requestsThisYear)
-                ->description('Tahun ' . $currentYear)
+            Stat::make('Total Permintaan Tahun Ini', $aggregates->total_this_year)
+                ->description('Tahun ' . $now->year)
                 ->descriptionIcon('heroicon-m-arrow-trending-up', 'before')
                 ->chart($monthlyChart)
                 ->color('info')
                 ->icon('heroicon-o-calendar-days'),
 
-            Stat::make('Belum Dibeli Tahun Ini', $notPurchasedThisYear)
-                ->description('Pending / Sedang diproses')
+            Stat::make('Belum Dibeli Tahun Ini', $aggregates->not_purchased_this_year)
+                ->description('Pending / Diproses')
                 ->descriptionIcon('heroicon-m-clock', 'before')
                 ->chart($monthlyChart)
                 ->color('warning')
                 ->icon('heroicon-o-exclamation-triangle'),
 
-            Stat::make('Sudah Dibeli Tahun Ini', $purchasedThisYear)
-                ->description('Pembelian telah selesai')
-                ->descriptionIcon('heroicon-m-arrow-trending-up', 'before')
+            Stat::make('Sudah Dibeli Tahun Ini', $aggregates->purchased_this_year)
+                ->description('Pembelian selesai')
+                ->descriptionIcon('heroicon-m-check-circle', 'before')
                 ->chart($monthlyChart)
                 ->color('success')
                 ->icon('heroicon-o-check-badge'),

@@ -1,114 +1,157 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8">
     <title>Laporan Pembelian Barang</title>
+
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
             font-size: 11px;
             margin: 0;
             padding: 20px;
+            color: #000;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-            border-bottom: 3px double #000;
-            padding-bottom: 15px;
+
+        /* ===== HEADER ===== */
+        .header table {
+            width: 100%;
+            border-collapse: collapse;
         }
-        .header-content {
-            display: inline-block;
+
+        .header td {
+            border: none;
         }
+
         .logo {
-            width: 70px;
-            height: auto;
-            float: left;
-            margin-right: 15px;
+            width: 65px;
         }
+
         .company-name {
-            font-size: 16px;
+            font-size: 13px;
             font-weight: bold;
+            text-transform: uppercase;
             margin: 0;
-            text-transform: uppercase;
         }
+
         .company-subtitle {
-            font-size: 18px;
+            font-size: 15px;
             font-weight: bold;
-            margin: 5px 0;
             text-transform: uppercase;
+            margin: 3px 0 0 0;
         }
+
+        .company-address {
+            font-size: 10px;
+            margin-top: 2px;
+            line-height: 1.3;
+        }
+
+        .header-line {
+            border-top: 3px double #000;
+            margin: 10px 0 15px;
+        }
+
+        /* ===== TITLE ===== */
         .report-title {
             font-size: 14px;
             font-weight: bold;
             text-align: center;
-            margin: 20px 0 10px;
             text-transform: uppercase;
+            margin-bottom: 5px;
         }
+
+        /* ===== FILTER INFO ===== */
         .filter-info {
             text-align: center;
-            margin-bottom: 15px;
             font-size: 11px;
+            margin-bottom: 15px;
         }
+
+        /* ===== TABLE ===== */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
         }
-        th, td {
+
+        th,
+        td {
             border: 1px solid #000;
-            padding: 6px 8px;
-            text-align: left;
+            padding: 6px 7px;
+            vertical-align: top;
         }
+
         th {
-            background-color: #f0f0f0;
+            background-color: #f2f2f2;
             font-weight: bold;
             text-align: center;
         }
+
         .text-center {
             text-align: center;
         }
+
         .text-right {
             text-align: right;
         }
+
+        /* ===== FOOTER ===== */
         .footer {
             margin-top: 20px;
             text-align: right;
             font-size: 10px;
         }
-        .clearfix::after {
-            content: "";
-            clear: both;
-            display: table;
-        }
     </style>
 </head>
+
 <body>
-    <div class="header clearfix">
-        @if(file_exists(public_path('images/logo.png')))
-            <img src="{{ public_path('images/logo.png') }}" class="logo" alt="Logo">
-        @endif
-        <div class="header-content">
-            <p class="company-name">Perusahaan Umum Daerah Air Minum</p>
-            <p class="company-subtitle">Tirta Perwira Kabupaten Purbalingga</p>
-        </div>
+
+    <!-- HEADER -->
+    <div class="header">
+        <table>
+            <tr>
+                <td width="80" align="center">
+                    @if(file_exists(public_path('images/logo.png')))
+                    <img src="{{ public_path('images/logo.png') }}" class="logo" alt="Logo">
+                    @endif
+                </td>
+                <td align="center">
+                    <p class="company-name">Perusahaan Umum Daerah Air Minum</p>
+                    <p class="company-subtitle">Tirta Perwira Kabupaten Purbalingga</p>
+                    <p class="company-address">
+                        Jl. Letnan Jenderal S. Parman No.62, Kedung Menjangan, Bancar,
+                        Kec. Purbalingga, Kabupaten Purbalingga, Jawa Tengah 53316
+                    </p>
+                </td>
+                <td width="80"></td>
+            </tr>
+        </table>
+        <div class="header-line"></div>
     </div>
 
+    <!-- TITLE -->
     <div class="report-title">
         Laporan Pembelian Barang
     </div>
 
+    <!-- FILTER -->
     <div class="filter-info">
         @if($startDate && $endDate)
-            Periode: {{ \Carbon\Carbon::parse($startDate)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($endDate)->format('d/m/Y') }}
+        <strong>Periode:</strong>
+        {{ \Carbon\Carbon::parse($startDate)->format('d/m/Y') }}
+        –
+        {{ \Carbon\Carbon::parse($endDate)->format('d/m/Y') }}
         @else
-            Semua Data
+        <em>Menampilkan seluruh data</em>
         @endif
     </div>
 
+    <!-- TABLE -->
     <table>
         <thead>
             <tr>
-                <th style="width: 30px;">No</th>
+                <th width="30">No</th>
                 <th>Tanggal</th>
                 <th>Nomor Dokumen</th>
                 <th>Nomor Aset</th>
@@ -121,27 +164,38 @@
         </thead>
         <tbody>
             @forelse($data as $index => $item)
-                <tr>
-                    <td class="text-center">{{ $index + 1 }}</td>
-                    <td>{{ $item->purchase_date ? \Carbon\Carbon::parse($item->purchase_date)->format('d/m/Y') : '-' }}</td>
-                    <td>{{ $item->document_number ?? '-' }}</td>
-                    <td>{{ $item->assets_number ?? '-' }}</td>
-                    <td>{{ $item->asset_name ?? '-' }}</td>
-                    <td>{{ $item->category->name ?? '-' }}</td>
-                    <td class="text-center">{{ $item->condition->name ?? '-' }}</td>
-                    <td>{{ $item->brand ?? '-' }}</td>
-                    <td class="text-right">{{ number_format($item->price ?? 0, 0, ',', '.') }}</td>
-                </tr>
+            <tr>
+                <td class="text-center">{{ $index + 1 }}</td>
+                <td class="text-center">
+                    {{ $item->purchase_date
+                    ? \Carbon\Carbon::parse($item->purchase_date)->format('d/m/Y')
+                    : '-' }}
+                </td>
+                <td>{{ $item->document_number ?? '-' }}</td>
+                <td>{{ $item->assets_number ?? '-' }}</td>
+                <td>{{ $item->asset_name ?? '-' }}</td>
+                <td>{{ $item->category->name ?? '-' }}</td>
+                <td class="text-center">{{ $item->condition->name ?? '-' }}</td>
+                <td>{{ $item->brand ?? '-' }}</td>
+                <td class="text-right">
+                    {{ number_format($item->price ?? 0, 0, ',', '.') }}
+                </td>
+            </tr>
             @empty
-                <tr>
-                    <td colspan="9" class="text-center">Tidak ada data</td>
-                </tr>
+            <tr>
+                <td colspan="9" class="text-center">
+                    Tidak ada data
+                </td>
+            </tr>
             @endforelse
         </tbody>
     </table>
 
+    <!-- FOOTER -->
     <div class="footer">
         Dicetak pada: {{ now()->format('d/m/Y H:i:s') }}
     </div>
+
 </body>
+
 </html>

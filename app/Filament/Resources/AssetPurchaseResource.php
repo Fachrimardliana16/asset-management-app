@@ -65,11 +65,7 @@ class AssetPurchaseResource extends Resource
                 // 1. No. DBP & Tanggal
                 TextColumn::make('document_number')
                     ->label('Info DPB')
-                    ->html()
-                    ->formatStateUsing(fn($record) => new HtmlString(
-                        "<div class='font-medium'>{$record->document_number}</div>" .
-                            "<div class='mt-1 text-sm text-gray-600'>{$record->date->format('d M Y')}</div>"
-                    ))
+                    ->description(fn($record) => $record->date->format('d M Y'))
                     ->searchable()
                     ->sortable(),
 
@@ -161,9 +157,11 @@ class AssetPurchaseResource extends Resource
                         'cancelled' => 'danger',
                         default => 'warning',
                     }),
+
                 Tables\Columns\ImageColumn::make('docs')
                     ->label('Lampiran')
                     ->toggleable(),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Dibuat')
                     ->dateTime('d M Y H:i')

@@ -214,17 +214,11 @@ class AssetResource extends Resource
                 // 2. Nomor Aset + Nama + Merk (kolom utama)
                 Tables\Columns\TextColumn::make('assets_number')
                     ->label('Nomor Aset & Nama')
-                    ->formatStateUsing(
-                        fn($record) =>
-                        $record->assets_number . "\n" .
-                            $record->name . ":" . "\n" .
-                            "<span class='text-xs text-gray-600'>{$record->brand}</span>"
-                    )
-                    ->html()
+                    ->description(fn($record) => $record->name, position: 'above')
+                    ->description(fn($record) => $record->brand, position: 'below')
                     ->searchable(['assets_number', 'name', 'brand'])
                     ->sortable()
-                    ->wrap()
-                    ->weight('bold'),
+                    ->wrap(),
 
                 // 3. Kategori + Kondisi + Status (pakai description & badge)
                 Tables\Columns\TextColumn::make('categoryAsset.name')
@@ -263,7 +257,8 @@ class AssetResource extends Resource
                         fn($record) =>
                         $record->book_value_expiry?->format('d M Y') ?? '−',
                         position: 'below'
-                    ),
+                    )
+                    ->alignCenter(),
 
                 // 7. Status Mutasi (badge kecil)
                 Tables\Columns\TextColumn::make('AssetTransactionStatus.name')
@@ -657,7 +652,7 @@ class AssetResource extends Resource
                         ->action(function ($records) {
                             $ids = $records->pluck('id')->toArray();
                             $url = route('asset.print-barcode-bulk', ['ids' => implode(',', $ids)]);
-                            
+
                             // Open in new tab
                             return redirect()->to($url);
                         })
