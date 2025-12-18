@@ -11,17 +11,25 @@ class PurchaseInvoiceController extends Controller
 {
     public function printInvoice($record)
     {
-        // Ambil data permintaan
+        // Ambil data permintaan dengan relationship yang benar
         $request = AssetRequests::with([
-            'category',
-            'employee',
-            'location',
-            'subLocation'
+            'items.category',
+            'items.location',
+            'items.subLocation',
+            'department',
+            'requestedBy'
         ])->findOrFail($record);
 
-        // Ambil data pembelian
+        // Ambil data pembelian dengan relationship lengkap
         $purchases = AssetPurchase::where('assetrequest_id', $record)
-            ->with(['condition', 'status'])
+            ->with([
+                'condition', 
+                'status',
+                'category',
+                'location',
+                'subLocation',
+                'user'
+            ])
             ->orderBy('item_index')
             ->get();
 
@@ -29,14 +37,16 @@ class PurchaseInvoiceController extends Controller
             abort(404, 'Data pembelian tidak ditemukan');
         }
 
-        $purchase = $purchases->first();
+        // Hitung total harga dari semua pembelian
+        $totalPrice = $purchases->sum('price');
+        $totalQuantity = $purchases->count();
 
         // Data untuk invoice
         $data = [
             'request' => $request,
             'purchases' => $purchases,
-            'purchase' => $purchase,
-            'total_price' => $purchase->price * $request->quantity,
+            'total_price' => $totalPrice,
+            'total_quantity' => $totalQuantity,
             'printed_at' => now(),
         ];
 

@@ -4,22 +4,13 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\AssetPurchaseResource\Pages;
 use App\Filament\Resources\AssetPurchaseResource\RelationManagers;
-use App\Models\Asset;
-use App\Models\AssetPurchase;
 use App\Models\AssetRequests;
-use App\Models\MasterAssetsCondition;
-use App\Models\MasterAssetsStatus;
-use App\Services\AssetNumberGenerator;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Facades\Auth;
 
@@ -49,21 +40,19 @@ class AssetPurchaseResource extends Resource
                         Forms\Components\TextInput::make('document_number')
                             ->label('Nomor Dokumen')
                             ->disabled(),
-                        Forms\Components\TextInput::make('asset_name')
-                            ->label('Nama Barang')
+                        Forms\Components\DatePicker::make('date')
+                            ->label('Tanggal Permintaan')
                             ->disabled(),
-                        Forms\Components\TextInput::make('category.name')
-                            ->label('Kategori Barang')
+                        Forms\Components\TextInput::make('total_items')
+                            ->label('Total Jenis Barang')
                             ->disabled(),
-                        Forms\Components\TextInput::make('quantity')
-                            ->label('Jumlah')
-                            ->disabled(),
-                        Forms\Components\TextInput::make('purpose')
-                            ->label('Keperluan')
+                        Forms\Components\TextInput::make('total_quantity')
+                            ->label('Total Unit')
                             ->disabled(),
                         Forms\Components\Textarea::make('desc')
                             ->label('Keterangan')
-                            ->disabled(),
+                            ->disabled()
+                            ->columnSpanFull(),
                     ])->columns(2)
             ]);
     }
@@ -71,7 +60,7 @@ class AssetPurchaseResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn($query) => $query->with('purchases'))
+            ->modifyQueryUsing(fn($query) => $query->with(['items', 'purchases', 'department']))
             ->columns([
                 // 1. No. DBP & Tanggal
                 TextColumn::make('document_number')
@@ -80,60 +69,76 @@ class AssetPurchaseResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                // 2. Barang (Nama Barang + Kategori + Jumlah)
-                TextColumn::make('asset_name')
+                // 2. Items Summary (Multiple Items)
+                TextColumn::make('items_summary')
                     ->label('Detail Barang')
-                    ->description(
-                        fn($record) => ($record->category?->name ?? '-') . "\n" .
-                            $record->quantity . ' unit'
-                    )
-                    ->searchable(['asset_name', 'category.name']),
-
-                // 3. Pemohon + Keperluan
-                TextColumn::make('employee.name')
-                    ->label('Pemohon & Keperluan')
-                    ->iconColor('gray') // mirip text-gray-600 di icon mu
-                    ->description(fn($record) => \Illuminate\Support\Str::limit($record->purpose ?? '', 60, '...'))
-                    ->tooltip(fn($record) => $record->purpose ?? '-')
-                    ->searchable(['employee.name', 'purpose']),
-
-                // 4. Lokasi + Sub Lokasi
-                TextColumn::make('location.name')
-                    ->label('Lokasi')
-                    ->description(
-                        fn($record) =>
-                        $record->subLocation?->name ??
-                            $record->masterAssetsSubLocation?->name ??
-                            '–'
-                    )
-                    ->searchable(['location.name', 'subLocation.name']),
-
-                // 5. Total Harga (jika sudah dibeli)
-                TextColumn::make('total_harga')
-                    ->label('Total Harga')
-                    ->state(function ($record) {
-                        if ($record->purchase_status === 'purchased' && $record->purchases->isNotEmpty()) {
-                            $purchase   = $record->purchases->first();
-                            $totalPrice = $purchase->price * $record->quantity;
-                            return 'Rp ' . number_format($totalPrice, 0, ',', '.');
+                    ->html()
+                    ->formatStateUsing(function ($record) {
+                        $items = $record->items;
+                        if ($items->isEmpty()) {
+                            return new HtmlString('<span class="text-gray-400 italic">Belum ada item</span>');
                         }
 
-                        return 'Belum dibeli';
-                    })
-                    ->description(function ($record) {
-                        if ($record->purchase_status === 'purchased' && $record->purchases->isNotEmpty()) {
-                            $purchase = $record->purchases->first();
-                            return '@Rp ' . number_format($purchase->price, 0, ',', '.') . ' × ' . $record->quantity . ' unit';
+                        $summary = $items->take(2)->map(function ($item) {
+                            return "<div class='mb-1'>" .
+                                "<span class='font-medium'>{$item->asset_name}</span> " .
+                                "<span class='text-xs'>({$item->category?->name})</span> " .
+                                "<span class='text-xs text-gray-500'>{$item->quantity} unit</span>" .
+                                "</div>";
+                        })->join('');
+
+                        if ($items->count() > 2) {
+                            $more = $items->count() - 2;
+                            $summary .= "<div class='text-xs text-blue-600'>+{$more} item lainnya</div>";
                         }
 
-                        return null;
-                    })
-                    ->extraAttributes(
-                        fn($record) =>
-                        $record->purchase_status === 'purchased' && $record->purchases->isNotEmpty()
-                            ? ['class' => 'text-green-600 font-medium']
-                            : ['class' => 'text-xs italic text-gray-400']
-                    ),
+                        return new HtmlString($summary);
+                    }),
+
+                // 3. Department & Pemohon
+                TextColumn::make('department.name')
+                    ->label('Departemen')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
+
+                TextColumn::make('requestedBy')
+                    ->label('Pemohon')
+                    ->formatStateUsing(fn($record) => $record->requestedBy ? ($record->requestedBy->firstname . ' ' . $record->requestedBy->lastname) : '-')
+                    ->sortable()
+                    ->toggleable(),
+
+                // 4. Total Items & Quantity
+                Tables\Columns\TextColumn::make('total_items')
+                    ->label('Total')
+                    ->html()
+                    ->formatStateUsing(fn($record) => new HtmlString(
+                        "<div class='font-medium'>{$record->total_items} jenis</div>" .
+                            "<div class='text-sm text-gray-600'>{$record->total_quantity} unit</div>"
+                    ))
+                    ->alignCenter()
+                    ->sortable(),
+
+                // 5. Progress Pembelian
+                TextColumn::make('purchase_progress')
+                    ->label('Progress')
+                    ->html()
+                    ->formatStateUsing(function ($record) {
+                        $totalQty = $record->total_quantity;
+                        $purchasedQty = $record->purchases()->count();
+                        $percentage = $totalQty > 0 ? min(100, ($purchasedQty / $totalQty) * 100) : 0;
+                        
+                        $color = $percentage === 0 ? 'gray' : ($percentage === 100 ? 'green' : 'blue');
+                        
+                        return new HtmlString(
+                            "<div class='flex items-center gap-2'>" .
+                                "<div class='flex-1 bg-gray-200 rounded-full h-2'>" .
+                                    "<div class='bg-{$color}-600 h-2 rounded-full' style='width: {$percentage}%'></div>" .
+                                "</div>" .
+                                "<span class='text-xs font-medium'>{$purchasedQty}/{$totalQty}</span>" .
+                            "</div>"
+                        );
+                    }),
 
                 Tables\Columns\TextColumn::make('purchase_status')
                     ->label('Status')
@@ -165,9 +170,9 @@ class AssetPurchaseResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                Tables\Filters\SelectFilter::make('category_id')
-                    ->relationship('category', 'name')
-                    ->label('Kategori')
+                Tables\Filters\SelectFilter::make('department_id')
+                    ->relationship('department', 'name')
+                    ->label('Departemen')
                     ->searchable()
                     ->preload(),
                 Tables\Filters\SelectFilter::make('purchase_status')
@@ -182,256 +187,13 @@ class AssetPurchaseResource extends Resource
             ->actions([
                 Tables\Actions\ActionGroup::make([
 
-                    // 1. Action Utama: Selesai Dibeli (Modal Form Lengkap)
-                    Tables\Actions\Action::make('selesai_dibeli')
-                        ->label('Selesai Dibeli')
-                        ->icon('heroicon-o-check-circle')
+                    // 1. Action Utama: Proses Pembelian (Full Page)
+                    Tables\Actions\Action::make('proses_pembelian')
+                        ->label('Proses Pembelian')
+                        ->icon('heroicon-o-shopping-cart')
                         ->color('success')
-                        ->visible(fn(AssetRequests $record) => $record->purchase_status !== 'purchased')
-                        ->modalHeading(fn(AssetRequests $record) => 'Selesaikan Pembelian: ' . $record->document_number)
-                        ->modalDescription(fn(AssetRequests $record) => "Akan membuat {$record->quantity} aset baru dengan nomor aset otomatis.")
-                        ->modalSubmitActionLabel('Simpan & Buat Aset')
-                        // ->modalWidth('4xl')
-                        ->form(function (AssetRequests $record) {
-                            return [
-                                Forms\Components\Section::make('Info Permintaan')
-                                    ->description('Data dari permintaan barang')
-                                    ->schema([
-                                        Forms\Components\Grid::make(3)->schema([
-                                            Forms\Components\Placeholder::make('asset_name_info')
-                                                ->label('Nama Barang')
-                                                ->content($record->asset_name),
-                                            Forms\Components\Placeholder::make('category_info')
-                                                ->label('Kategori')
-                                                ->content($record->category?->name . ' (' . $record->category?->kode . ')'),
-                                            Forms\Components\Placeholder::make('quantity_info')
-                                                ->label('Jumlah')
-                                                ->content($record->quantity . ' buah'),
-                                        ]),
-                                        Forms\Components\Grid::make(3)->schema([
-                                            Forms\Components\Placeholder::make('employee_info')
-                                                ->label('Pemohon')
-                                                ->content($record->employee?->name ?? '-'),
-                                            Forms\Components\Placeholder::make('location_info')
-                                                ->label('Lokasi')
-                                                ->content($record->location?->name . ' (' . ($record->location?->kode ?? '-') . ')'),
-                                            Forms\Components\Placeholder::make('sub_location_info')
-                                                ->label('Sub Lokasi')
-                                                ->content($record->subLocation?->name ?? '-'),
-                                        ]),
-                                    ])
-                                    ->collapsible()
-                                    ->collapsed(),
-
-                                Forms\Components\Section::make('Data Pembelian & Aset Baru')
-                                    ->description('Lengkapi data pembelian. Nomor aset akan di-generate otomatis.')
-                                    ->icon('heroicon-o-shopping-cart')
-                                    ->schema([
-                                        Forms\Components\Grid::make(2)->schema([
-                                            Forms\Components\DatePicker::make('purchase_date')
-                                                ->label('Tanggal Pembelian')
-                                                ->required()
-                                                ->default(now())
-                                                ->maxDate(now())
-                                                ->live()
-                                                ->afterStateUpdated(function ($state, $set) use ($record) {
-                                                    if ($state && $record->category_id && $record->location_id) {
-                                                        $preview = AssetNumberGenerator::preview(
-                                                            $record->category_id,
-                                                            $record->location_id,
-                                                            $state,
-                                                            $record->quantity
-                                                        );
-                                                        $set('asset_numbers_preview', implode("\n", $preview));
-                                                    }
-                                                }),
-
-                                            Forms\Components\TextInput::make('brand')
-                                                ->label('Merk / Tipe')
-                                                ->required()
-                                                ->maxLength(255),
-                                        ]),
-
-                                        Forms\Components\Textarea::make('asset_numbers_preview')
-                                            ->label('Preview Nomor Aset')
-                                            ->rows($record->quantity > 5 ? 5 : $record->quantity)
-                                            ->disabled()
-                                            ->default(function () use ($record) {
-                                                if ($record->category_id && $record->location_id) {
-                                                    $preview = AssetNumberGenerator::preview(
-                                                        $record->category_id,
-                                                        $record->location_id,
-                                                        now(),
-                                                        $record->quantity
-                                                    );
-                                                    return implode("\n", $preview);
-                                                }
-                                                return 'Pastikan kategori dan lokasi sudah terisi di permintaan';
-                                            })
-                                            ->helperText('Nomor aset akan di-generate otomatis berdasarkan: Kode Kategori, Kode Lokasi, Urutan Tahun, Tanggal Pembelian')
-                                            ->columnSpanFull(),
-
-                                        Forms\Components\Grid::make(2)->schema([
-                                            Forms\Components\TextInput::make('price')
-                                                ->label('Harga Satuan')
-                                                ->required()
-                                                ->numeric()
-                                                ->prefix('Rp')
-                                                ->minValue(1)
-                                                ->helperText('Harga per unit'),
-
-                                            Forms\Components\TextInput::make('funding_source')
-                                                ->label('Sumber Dana')
-                                                ->required()
-                                                ->maxLength(255),
-                                        ]),
-
-                                        Forms\Components\Grid::make(2)->schema([
-                                            Forms\Components\Select::make('condition_id')
-                                                ->label('Kondisi Aset')
-                                                ->options(\App\Models\MasterAssetsCondition::pluck('name', 'id'))
-                                                ->required()
-                                                ->searchable()
-                                                ->preload()
-                                                ->default(function () {
-                                                    return \App\Models\MasterAssetsCondition::where('name', 'like', '%baru%')->first()?->id;
-                                                }),
-
-                                            Forms\Components\Select::make('status_id')
-                                                ->label('Status Aset')
-                                                ->options(\App\Models\MasterAssetsStatus::pluck('name', 'id'))
-                                                ->default(function () {
-                                                    return \App\Models\MasterAssetsStatus::where('name', 'Aktif')
-                                                        ->orWhere('name', 'Active')
-                                                        ->first()?->id;
-                                                })
-                                                ->required()
-                                                ->searchable()
-                                                ->preload(),
-                                        ]),
-
-                                        Forms\Components\Grid::make(2)->schema([
-                                            Forms\Components\TextInput::make('book_value')
-                                                ->label('Nilai Buku')
-                                                ->numeric()
-                                                ->prefix('Rp')
-                                                ->default(0)
-                                                ->helperText('Kosongkan jika sama dengan harga beli'),
-
-                                            Forms\Components\DatePicker::make('book_value_expiry')
-                                                ->label('Habis Nilai Buku')
-                                                ->default(now()->addYears(5)),
-                                        ]),
-
-                                        Forms\Components\FileUpload::make('img')
-                                            ->label('Foto Aset')
-                                            ->directory('assets')
-                                            ->disk('public')
-                                            ->image()
-                                            ->imageEditor()
-                                            ->maxSize(5120)
-                                            ->acceptedFileTypes(['image/jpeg', 'image/png'])
-                                            ->helperText('Maks 5MB. JPG/PNG. Foto yang sama akan digunakan untuk semua aset.')
-                                            ->columnSpanFull(),
-
-                                        Forms\Components\Textarea::make('purchase_notes')
-                                            ->label('Catatan Pembelian')
-                                            ->rows(3)
-                                            ->columnSpanFull(),
-                                    ])->columns(2),
-                            ];
-                        })
-                        ->action(function (AssetRequests $record, array $data) {
-                            // Validasi: pastikan category dan location ada
-                            if (!$record->category_id || !$record->location_id) {
-                                Notification::make()
-                                    ->danger()
-                                    ->title('Error!')
-                                    ->body('Permintaan harus memiliki Kategori dan Lokasi yang valid.')
-                                    ->send();
-                                return;
-                            }
-
-                            DB::transaction(function () use ($record, $data) {
-                                $quantity = $record->quantity;
-                                $bookValue = $data['book_value'] ?: $data['price'];
-
-                                // PENTING: Generate sequential number SEKALI sebelum loop
-                                // agar semua item dalam 1 permintaan mendapat nomor urut yang sama
-                                $purchaseDate = new \DateTime($data['purchase_date']);
-                                $sequentialNumber = AssetNumberGenerator::getYearlySequentialNumber($purchaseDate->format('Y'));
-
-                                for ($i = 1; $i <= $quantity; $i++) {
-                                    // Generate nomor aset dengan sequential number yang sudah dihitung
-                                    $assetNumber = AssetNumberGenerator::generate(
-                                        $record->category_id,
-                                        $record->location_id,
-                                        $data['purchase_date'],
-                                        $i,
-                                        $sequentialNumber, // Gunakan sequential number yang SAMA untuk semua item!
-                                        $quantity
-                                    );
-
-                                    // 1. Simpan ke Asset Purchase
-                                    \App\Models\AssetPurchase::create([
-                                        'assetrequest_id' => $record->id,
-                                        'document_number' => $record->document_number,
-                                        'assets_number' => $assetNumber,
-                                        'asset_name' => $record->asset_name,
-                                        'category_id' => $record->category_id,
-                                        'employee_id' => $record->employee_id,
-                                        'location_id' => $record->location_id,
-                                        'sub_location_id' => $record->sub_location_id,
-                                        'brand' => $data['brand'],
-                                        'purchase_date' => $data['purchase_date'],
-                                        'condition_id' => $data['condition_id'],
-                                        'status_id' => $data['status_id'],
-                                        'price' => $data['price'],
-                                        'book_value' => $bookValue,
-                                        'book_value_expiry' => $data['book_value_expiry'],
-                                        'funding_source' => $data['funding_source'],
-                                        'img' => $data['img'] ?? null,
-                                        'purchase_notes' => $data['purchase_notes'] ?? null,
-                                        'item_index' => $i,
-                                        'users_id' => auth()->id(),
-                                    ]);
-
-                                    // 2. Simpan ke Assets
-                                    \App\Models\Asset::create([
-                                        'assets_number' => $assetNumber,
-                                        'name' => $record->asset_name,
-                                        'category_id' => $record->category_id,
-                                        'brand' => $data['brand'],
-                                        'purchase_date' => $data['purchase_date'],
-                                        'condition_id' => $data['condition_id'],
-                                        'status_id' => $data['status_id'],
-                                        'price' => $data['price'],
-                                        'funding_source' => $data['funding_source'],
-                                        'book_value' => $bookValue,
-                                        'book_value_expiry' => $data['book_value_expiry'],
-                                        'img' => $data['img'] ?? null,
-                                        'desc' => $record->desc,
-                                        'users_id' => auth()->id(),
-                                    ]);
-                                }
-
-                                // 3. Update status permintaan
-                                $record->update([
-                                    'purchase_status' => 'purchased',
-                                    'purchase_date' => $data['purchase_date'],
-                                    'purchase_notes' => $data['purchase_notes'] ?? null,
-                                ]);
-                            });
-
-                            Notification::make()
-                                ->success()
-                                ->title('Sukses!')
-                                ->body("Pembelian selesai. {$record->quantity} aset baru telah ditambahkan.")
-                                ->send();
-                        })
-                        ->requiresConfirmation()
-                        ->modalIcon('heroicon-o-check-circle')
-                        ->modalIconColor('success'),
+                        ->visible(fn(AssetRequests $record) => $record->purchase_status !== 'purchased' && $record->items()->count() > 0)
+                        ->url(fn(AssetRequests $record) => static::getUrl('process', ['record' => $record->id])),
 
                     // 2. Action Lain: View
                     Tables\Actions\ViewAction::make()
@@ -479,6 +241,7 @@ class AssetPurchaseResource extends Resource
         return [
             'index' => Pages\ListAssetPurchases::route('/'),
             'view' => Pages\ViewAssetPurchase::route('/{record}'),
+            'process' => Pages\ProcessPurchase::route('/{record}/process'),
         ];
     }
 }

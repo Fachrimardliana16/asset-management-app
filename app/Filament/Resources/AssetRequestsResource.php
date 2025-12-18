@@ -34,8 +34,8 @@ class AssetRequestsResource extends Resource
     {
         return $form
             ->schema([
-                Section::make('Form Input Permintaan')
-                    ->description('Input Data Permintaan Barang')
+                Section::make('Informasi Umum Permintaan')
+                    ->description('Data umum permintaan barang')
                     ->schema([
                         Grid::make(2)
                             ->schema([
@@ -45,8 +45,8 @@ class AssetRequestsResource extends Resource
                                     ->unique(ignoreRecord: true)
                                     ->maxLength(255)
                                     ->default(fn() => 'PR-' . now()->format('Ym') . '-' . str_pad(AssetRequests::whereYear('created_at', now()->year)->whereMonth('created_at', now()->month)->count() + 1, 4, '0', STR_PAD_LEFT))
-                                    ->disabledOn('edit') // edit tetap bisa lihat, tapi nggak bisa ubah
-                                    ->dehydrated(), // tetap disimpan
+                                    ->disabledOn('edit')
+                                    ->dehydrated(),
 
                                 Forms\Components\DatePicker::make('date')
                                     ->label('Tanggal Permintaan')
@@ -56,84 +56,129 @@ class AssetRequestsResource extends Resource
                                         'required' => 'Tanggal permintaan wajib diisi.',
                                     ]),
 
-                                Forms\Components\Select::make('employee_id')
-                                    ->relationship('employee', 'name')
-                                    ->label('Pegawai/Pemohon')
+                                Forms\Components\Select::make('department_id')
+                                    ->relationship('department', 'name')
+                                    ->label('Departemen')
+                                    ->searchable()
+                                    ->preload()
+                                    ->required(),
+
+                                Forms\Components\Select::make('requested_by')
+                                    ->relationship('requestedBy', 'username')
+                                    ->label('Pemohon')
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->columnSpanFull(),
+                                    ->default(auth()->id())
+                                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->firstname . ' ' . $record->lastname),
+                            ]),
 
+                        Forms\Components\Textarea::make('desc')
+                            ->label('Keterangan Umum')
+                            ->rows(3)
+                            ->columnSpanFull()
+                            ->placeholder('Contoh: Masuk RKA 2025/Pengalihan RKA 2025'),
+                    ])
+                    ->collapsible(),
 
-
-
-                                Grid::make(3) // Grid baru di dalam Grid 2 kolom, dengan 3 kolom
-                                    ->columnSpanFull() // Pastikan Grid 3 kolom ini membentang penuh (2 kolom) di Grid induknya
+                Section::make('Daftar Barang yang Diminta')
+                    ->description('Tambahkan satu atau lebih barang yang diminta')
+                    ->schema([
+                        Forms\Components\Repeater::make('items')
+                            ->schema([
+                                Grid::make(3)
                                     ->schema([
                                         Forms\Components\TextInput::make('asset_name')
                                             ->label('Nama Barang')
                                             ->required()
                                             ->maxLength(255)
-                                            ->validationMessages([
-                                                'required' => 'Nama barang wajib diisi.',
-                                                'max' => 'Nama barang maksimal 255 karakter.',
-                                            ]),
+                                            ->placeholder('Contoh: Laptop Dell Latitude 5420'),
 
                                         Forms\Components\Select::make('category_id')
-                                            ->relationship('category', 'name')
                                             ->label('Kategori')
+                                            ->options(\App\Models\MasterAssetsCategory::pluck('name', 'id'))
                                             ->required()
                                             ->searchable()
                                             ->preload(),
 
-
                                         Forms\Components\TextInput::make('quantity')
-                                            ->label('Jumlah Satuan')
+                                            ->label('Jumlah')
                                             ->required()
                                             ->numeric()
                                             ->minValue(1)
-                                            ->suffix(' buah')
-                                            ->placeholder('Masukkan angka saja, tanpa kata "buah"'), // Kolom 3 dari 3
+                                            ->default(1)
+                                            ->suffix(' unit'),
                                     ]),
-                                Forms\Components\Select::make('location_id')
-                                    ->relationship('location', 'name')
-                                    ->label('Lokasi')
-                                    ->searchable()
-                                    ->preload()
+
+                                Grid::make(2)
+                                    ->schema([
+                                        Forms\Components\Select::make('location_id')
+                                            ->label('Lokasi')
+                                            ->options(\App\Models\MasterAssetsLocation::pluck('name', 'id'))
+                                            ->searchable()
+                                            ->preload()
+                                            ->required()
+                                            ->live()
+                                            ->afterStateUpdated(fn($set) => $set('sub_location_id', null)),
+
+                                        Forms\Components\Select::make('sub_location_id')
+                                            ->label('Sub Lokasi')
+                                            ->options(
+                                                fn(Get $get) =>
+                                                $get('location_id')
+                                                    ? \App\Models\MasterAssetsSubLocation::where('location_id', $get('location_id'))
+                                                    ->orderBy('name')
+                                                    ->pluck('name', 'id')
+                                                    : []
+                                            )
+                                            ->searchable()
+                                            ->preload(false)
+                                            ->live()
+                                            ->placeholder('Pilih lokasi dulu...'),
+                                    ]),
+
+                                Forms\Components\TextInput::make('purpose')
+                                    ->label('Keperluan')
                                     ->required()
-                                    ->live()
-                                    ->afterStateUpdated(fn($set) => $set('sub_location_id', null)), // Reset sub lokasi otomatis
+                                    ->maxLength(255)
+                                    ->placeholder('Contoh: Untuk staff baru'),
 
-                                Forms\Components\Select::make('sub_location_id')
-                                    ->label('Sub Lokasi')
-                                    ->options(
-                                        fn(callable $get) =>
-                                        $get('location_id')
-                                            ? \App\Models\MasterAssetsSubLocation::where('location_id', $get('location_id'))
-                                            ->orderBy('name')
-                                            ->pluck('name', 'id')
-                                            : []
-                                    )
-                                    ->searchable()
-                                    ->preload(false)
-                                    ->live() // wajib live/reactive supaya options langsung berubah
-                                    ->dehydrated(fn($state) => filled($state))
-                                    ->required(fn(callable $get) => filled($get('location_id')))
-                                    ->placeholder('Pilih lokasi dulu...'), // bonus: lebih user-friendly
-                            ]),
-
-                        Forms\Components\TextInput::make('purpose')
-                            ->label('Untuk Keperluan')
-                            ->required()
-                            ->maxLength(255)
-                            ->placeholder('Contoh: Penggantian laptop rusak, renovasi ruang meeting'),
-
-                        Forms\Components\Textarea::make('desc')
-                            ->label('Keterangan')
-                            ->rows(4)
+                                Forms\Components\Textarea::make('notes')
+                                    ->label('Catatan Item')
+                                    ->rows(2)
+                                    ->placeholder('Catatan khusus untuk item ini (opsional)'),
+                            ])
+                            ->columns(1)
+                            ->itemLabel(fn(array $state): ?string => $state['asset_name'] ?? 'Item Baru')
+                            ->addActionLabel('+ Tambah Barang')
+                            ->collapsible()
+                            ->collapsed(fn(string $operation) => $operation === 'edit')
+                            ->cloneable()
+                            ->reorderable()
+                            ->minItems(1)
+                            ->maxItems(20)
                             ->columnSpanFull()
-                            ->placeholder('Contoh: Masuk RKA 2025/Pengalihan RKA 2025'),
-                    ]),
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                // Auto calculate totals
+                                $totalItems = count($state ?? []);
+                                $totalQuantity = collect($state ?? [])->sum('quantity');
+                                $set('total_items', $totalItems);
+                                $set('total_quantity', $totalQuantity);
+                            })
+                            ->live(),
+
+                        Grid::make(2)
+                            ->schema([
+                                Forms\Components\Placeholder::make('total_items')
+                                    ->label('Total Jenis Barang')
+                                    ->content(fn(Get $get) => count($get('items') ?? []) . ' jenis'),
+
+                                Forms\Components\Placeholder::make('total_quantity')
+                                    ->label('Total Unit')
+                                    ->content(fn(Get $get) => collect($get('items') ?? [])->sum('quantity') . ' unit'),
+                            ]),
+                    ])
+                    ->collapsible(),
 
                 Section::make('Pengesahan')
                     ->description('Pengesahan Permintaan')
@@ -204,7 +249,7 @@ class AssetRequestsResource extends Resource
                     ->schema([
                         Forms\Components\Placeholder::make('created_by')
                             ->label('Diajukan Oleh')
-                            ->content(fn($record) => $record?->user?->name ?? auth()->user()->name),
+                            ->content(fn($record) => $record?->user ? $record->user->firstname . ' ' . $record->user->lastname : (auth()->user()->firstname . ' ' . auth()->user()->lastname)),
 
                         Forms\Components\Placeholder::make('created_at')
                             ->label('Tanggal Diajukan')
@@ -221,48 +266,36 @@ class AssetRequestsResource extends Resource
     {
         return $table
             ->columns([
-
-                TextColumn::make('document_number') // nama kolom bisa tetap document_number atau bebas
-                    ->label('Info DPB')
-                    ->formatStateUsing(fn($record) => new HtmlString(
-                        '<span class="font-bold">' . ($record->document_number ?? '-') . '</span><br>' .
-                            ($record->date?->format('d M Y') ?? '-')
-                    ))
-                    ->html(), // render sebagai HTML asli
-
-                // 2. Barang (Nama Barang + Kategori + Jumlah)
-                TextColumn::make('asset_name')
-                    ->label('Detail Barang')
-                    ->description(
-                        fn($record) => ($record->category?->name ?? '-') . "\n" .
-                            $record->quantity . ' unit'
-                    )
-                    ->searchable(['asset_name', 'category.name']),
-
-                // Pegawai/Pemohon
-                Tables\Columns\TextColumn::make('employee.name')
-                    ->label('Pemohon')
+                TextColumn::make('document_number')
+                    ->label('Nomor DBP')
                     ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('date')
+                    ->label('Tanggal')
+                    ->date('d M Y')
+                    ->sortable(),
+
+                // Total Items & Quantity
+                Tables\Columns\TextColumn::make('total_items')
+                    ->label('Jml Jenis')
+                    ->alignCenter()
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('total_quantity')
+                    ->label('Jml Unit')
+                    ->alignCenter()
+                    ->sortable(),
+
+                // Department
+                Tables\Columns\TextColumn::make('department.name')
+                    ->label('Departemen')
                     ->sortable()
                     ->toggleable(),
 
-                // Lokasi
-                Tables\Columns\TextColumn::make('location.name')
-                    ->label('Lokasi')
-                    ->searchable()
-                    ->sortable()
-                    ->toggleable(),
-
-                // 4. Keperluan + tooltip keterangan
-                Tables\Columns\TextColumn::make('purpose')
-                    ->label('Keperluan')
-                    ->limit(35)
-                    ->tooltip(fn($record) => "Keperluan: " . $record->purpose . "\n\nKeterangan:\n" . ($record->desc ?: 'Tidak ada'))
-                    ->searchable(),
-
-                // 5. Status Pembelian + tanggal pembelian di bawah
+                // Status Pembelian
                 Tables\Columns\TextColumn::make('purchase_status')
-                    ->label('Status Pembelian')
+                    ->label('Status')
                     ->badge()
                     ->formatStateUsing(fn($state) => match ($state) {
                         'pending' => 'Menunggu',
@@ -277,39 +310,28 @@ class AssetRequestsResource extends Resource
                         'purchased' => 'success',
                         'cancelled' => 'danger',
                         default => 'warning',
-                    })
-                    ->description(fn($record) => $record->purchase_date?->format('d M Y') ?: '−'),
+                    }),
 
-                // 6. Pengesahan (Lengkap / -3 dll)
-                Tables\Columns\TextColumn::make('kekurangan_pengesahan')
-                    ->label('Pengesahan')
-                    ->badge()
-                    ->getStateUsing(function ($record) {
-                        $fields = ['kepala_sub_bagian', 'kepala_bagian_umum', 'kepala_bagian_keuangan', 'direktur_umum', 'direktur_utama'];
-                        $kurang = collect($fields)->filter(fn($f) => ! $record->{$f})->count();
-                        return $kurang === 0 ? 'Lengkap' : "-{$kurang}";
-                    })
-                    ->color(fn($state) => $state === 'Lengkap' ? 'success' : 'danger')
-                    ->icon(fn($state) => $state === 'Lengkap' ? 'heroicon-o-check-badge' : 'heroicon-o-clock')
-                    ->alignCenter()
-                    ->size('lg'),
+                Tables\Columns\BooleanColumn::make('status_request')
+                    ->label('Approved')
+                    ->sortable()
+                    ->toggleable(),
 
-                // 7. Lampiran (gambar kecil) + tanggal dibuat di title (hover)
                 Tables\Columns\ImageColumn::make('docs')
                     ->label('Lampiran')
-                    ->size(50)
-                    ->rounded()
-                    ->defaultImageUrl(asset('images/no-image.png')) // optional, buat placeholder
-                    ->extraImgAttributes(fn($record) => [
-                        'title' => 'Dibuat: ' . $record->created_at->format('d/m/Y H:i'),
-                        'class' => 'border shadow-sm cursor-pointer'
-                    ]),
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Dibuat')
+                    ->dateTime('d M Y H:i')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                Tables\Filters\SelectFilter::make('category_id')
-                    ->relationship('category', 'name')
-                    ->label('Kategori')
+                Tables\Filters\SelectFilter::make('department_id')
+                    ->relationship('department', 'name')
+                    ->label('Departemen')
                     ->searchable()
                     ->preload(),
                 Tables\Filters\SelectFilter::make('purchase_status')

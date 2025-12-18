@@ -315,12 +315,12 @@
         </div>
         <div class="info-row">
             <div class="info-label">Tanggal Permintaan</div>
-            <div class="info-value">: {{ $request->date->format('d F Y') }}</div>
+            <div class="info-value">: {{ \Carbon\Carbon::parse($request->date)->format('d F Y') }}</div>
         </div>
         <div class="info-row">
             <div class="info-label">Tanggal Pembelian</div>
-            <div class="info-value">: <strong>{{ $purchase->purchase_date ?
-                    \Carbon\Carbon::parse($purchase->purchase_date)->format('d F Y') : '-' }}</strong></div>
+            <div class="info-value">: <strong>{{ $request->purchase_date ?
+                    \Carbon\Carbon::parse($request->purchase_date)->format('d F Y') : '-' }}</strong></div>
         </div>
         <div class="info-row">
             <div class="info-label">Status</div>
@@ -328,61 +328,44 @@
         </div>
     </div>
 
-    <div class="section-title">Detail Barang</div>
+    <div class="section-title">Informasi Pemohon & Department</div>
     <div class="invoice-info">
         <div class="info-row">
-            <div class="info-label">Nama Barang</div>
-            <div class="info-value">: <strong>{{ $request->asset_name }}</strong></div>
+            <div class="info-label">Department</div>
+            <div class="info-value">: <strong>{{ $request->department?->name ?? '-' }}</strong></div>
         </div>
         <div class="info-row">
-            <div class="info-label">Kategori</div>
-            <div class="info-value">: {{ $request->category?->name }} ({{ $request->category?->kode }})</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">Merk / Tipe</div>
-            <div class="info-value">: {{ $purchase->brand }}</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">Jumlah</div>
-            <div class="info-value">: <strong>{{ $request->quantity }} unit</strong></div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">Keperluan</div>
-            <div class="info-value">: {{ $request->purpose }}</div>
+            <div class="info-label">Pemohon</div>
+            <div class="info-value">: {{ $request->requestedBy ? $request->requestedBy->firstname . ' ' . $request->requestedBy->lastname : '-' }}</div>
         </div>
         @if($request->desc)
         <div class="info-row">
-            <div class="info-label">Keterangan</div>
+            <div class="info-label">Keterangan Permintaan</div>
             <div class="info-value">: {{ $request->desc }}</div>
         </div>
         @endif
-    </div>
-
-    <div class="section-title">Informasi Pemohon & Lokasi</div>
-    <div class="invoice-info">
         <div class="info-row">
-            <div class="info-label">Pemohon</div>
-            <div class="info-value">: {{ $request->employee?->name ?? '-' }}</div>
+            <div class="info-label">Total Jenis Barang</div>
+            <div class="info-value">: <strong>{{ $request->total_items }} jenis</strong></div>
         </div>
         <div class="info-row">
-            <div class="info-label">Lokasi</div>
-            <div class="info-value">: {{ $request->location?->name }} ({{ $request->location?->kode }})</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">Sub Lokasi</div>
-            <div class="info-value">: {{ $request->subLocation?->name ?? '-' }}</div>
+            <div class="info-label">Total Unit</div>
+            <div class="info-value">: <strong>{{ $request->total_quantity }} unit</strong></div>
         </div>
     </div>
 
-    <div class="section-title">Daftar Nomor Aset yang Dibuat</div>
+    <div class="section-title">Daftar Aset yang Dibeli</div>
     <table class="items-table">
         <thead>
             <tr>
-                <th style="width: 5%;">No</th>
-                <th style="width: 25%;">Nomor Aset</th>
-                <th style="width: 30%;">Nama Barang</th>
-                <th style="width: 20%;">Kondisi</th>
-                <th style="width: 20%;">Status</th>
+                <th style="width: 4%;">No</th>
+                <th style="width: 18%;">Nomor Aset</th>
+                <th style="width: 20%;">Nama Barang</th>
+                <th style="width: 15%;">Kategori</th>
+                <th style="width: 15%;">Merk/Tipe</th>
+                <th style="width: 10%;">Harga</th>
+                <th style="width: 10%;">Kondisi</th>
+                <th style="width: 8%;">Status</th>
             </tr>
         </thead>
         <tbody>
@@ -391,8 +374,11 @@
                 <td class="text-center">{{ $index + 1 }}</td>
                 <td class="text-center"><strong>{{ $item->assets_number }}</strong></td>
                 <td>{{ $item->asset_name }}</td>
-                <td class="text-center">{{ $item->condition?->name ?? '-' }}</td>
-                <td class="text-center">{{ $item->status?->name ?? '-' }}</td>
+                <td style="font-size: 9px;">{{ $item->category?->name ?? '-' }}</td>
+                <td style="font-size: 9px;">{{ $item->brand ?? '-' }}</td>
+                <td class="text-right">Rp {{ number_format($item->price, 0, ',', '.') }}</td>
+                <td class="text-center" style="font-size: 9px;">{{ $item->condition?->name ?? '-' }}</td>
+                <td class="text-center" style="font-size: 9px;">{{ $item->status?->name ?? '-' }}</td>
             </tr>
             @endforeach
         </tbody>
@@ -401,19 +387,15 @@
     <div class="section-title">Rincian Biaya</div>
     <div class="total-section">
         <div class="total-row">
-            <div class="total-label">Harga Satuan</div>
-            <div class="total-value">Rp {{ number_format($purchase->price, 0, ',', '.') }}</div>
+            <div class="total-label">Jumlah Total Unit</div>
+            <div class="total-value">{{ $total_quantity }} unit</div>
         </div>
         <div class="total-row">
-            <div class="total-label">Jumlah Unit</div>
-            <div class="total-value">{{ $request->quantity }} unit</div>
-        </div>
-        <div class="total-row">
-            <div class="total-label">Nilai Buku (per unit)</div>
-            <div class="total-value">Rp {{ number_format($purchase->book_value, 0, ',', '.') }}</div>
+            <div class="total-label">Total Nilai Buku</div>
+            <div class="total-value">Rp {{ number_format($purchases->sum('book_value'), 0, ',', '.') }}</div>
         </div>
         <div class="total-row grand-total">
-            <div class="total-label">TOTAL HARGA</div>
+            <div class="total-label">TOTAL HARGA PEMBELIAN</div>
             <div class="total-value">Rp {{ number_format($total_price, 0, ',', '.') }}</div>
         </div>
     </div>
@@ -424,24 +406,28 @@
     <div class="invoice-info">
         <div class="info-row">
             <div class="info-label">Sumber Dana</div>
-            <div class="info-value">: {{ $purchase->funding_source }}</div>
+            <div class="info-value">: {{ $purchases->first()->funding_source ?? '-' }}</div>
         </div>
         <div class="info-row">
             <div class="info-label">Habis Nilai Buku</div>
-            <div class="info-value">: {{ $purchase->book_value_expiry ?
-                \Carbon\Carbon::parse($purchase->book_value_expiry)->format('d F Y') : '-' }}</div>
+            <div class="info-value">: {{ $purchases->first()->book_value_expiry ?
+                \Carbon\Carbon::parse($purchases->first()->book_value_expiry)->format('d F Y') : '-' }}</div>
         </div>
-        @if($purchase->purchase_notes)
+        @if($purchases->first()->purchase_notes)
         <div class="info-row">
             <div class="info-label">Catatan Pembelian</div>
-            <div class="info-value">: {{ $purchase->purchase_notes }}</div>
+            <div class="info-value">: {{ $purchases->first()->purchase_notes }}</div>
         </div>
         @endif
+        <div class="info-row">
+            <div class="info-label">Diproses Oleh</div>
+            <div class="info-value">: {{ $purchases->first()->user?->firstname ?? '-' }} {{ $purchases->first()->user?->lastname ?? '' }}</div>
+        </div>
     </div>
 
     @if($request->purchase_notes)
     <div class="notes-section">
-        <div class="notes-title">Catatan:</div>
+        <div class="notes-title">Catatan Permintaan:</div>
         <div>{{ $request->purchase_notes }}</div>
     </div>
     @endif

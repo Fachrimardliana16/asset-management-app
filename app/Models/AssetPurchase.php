@@ -14,6 +14,7 @@ class AssetPurchase extends Model
 
     protected $fillable = [
         'assetrequest_id',
+        'asset_request_item_id',
         'document_number',
         'assets_number',
         'asset_name',
@@ -35,14 +36,32 @@ class AssetPurchase extends Model
         'users_id',
     ];
 
+    protected $casts = [
+        'purchase_date' => 'date',
+        'book_value_expiry' => 'date',
+        'price' => 'decimal:2',
+        'book_value' => 'decimal:2',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class, 'users_id');
     }
 
+    /**
+     * Relasi ke Asset Request (Master) - Backward compatibility
+     */
     public function assetRequest()
     {
         return $this->belongsTo(AssetRequests::class, 'assetrequest_id');
+    }
+
+    /**
+     * Relasi ke Asset Request Item (Detail) - NEW
+     */
+    public function requestItem()
+    {
+        return $this->belongsTo(AssetRequestItem::class, 'asset_request_item_id');
     }
 
     public function category()
