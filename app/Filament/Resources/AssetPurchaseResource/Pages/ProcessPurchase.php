@@ -4,6 +4,7 @@ namespace App\Filament\Resources\AssetPurchaseResource\Pages;
 
 use App\Filament\Resources\AssetPurchaseResource;
 use App\Models\AssetRequests;
+use App\Models\MasterTaxType;
 use App\Services\AssetNumberGenerator;
 use Filament\Actions;
 use Filament\Forms;
@@ -278,6 +279,80 @@ class ProcessPurchase extends Page
                                 ->reorderable(false)
                                 ->columnSpanFull(),
 
+                            // Section untuk input pajak (opsional)
+                            Forms\Components\Section::make('Data Pajak')
+                                ->description('Opsional - Catat pajak aset jika ada')
+                                ->icon('heroicon-o-document-text')
+                                ->collapsible()
+                                ->collapsed(true)
+                                ->schema([
+                                    Forms\Components\Toggle::make("items.{$item->id}.has_taxes")
+                                        ->label('Catat pajak sekarang?')
+                                        ->helperText('Aktifkan jika ingin mencatat data pajak untuk aset ini')
+                                        ->live()
+                                        ->default(false)
+                                        ->columnSpanFull(),
+
+                                    Forms\Components\Repeater::make("items.{$item->id}.taxes")
+                                        ->label('Daftar Pajak')
+                                        ->schema([
+                                            Forms\Components\Select::make('tax_type_id')
+                                                ->label('Jenis Pajak')
+                                                ->options(function () use ($item) {
+                                                    // Filter tax types by category
+                                                    return MasterTaxType::where('asset_category_id', $item->category_id)
+                                                        ->where('is_active', true)
+                                                        ->pluck('name', 'id');
+                                                })
+                                                ->required()
+                                                ->searchable()
+                                                ->preload()
+                                                ->helperText('Pilih jenis pajak sesuai kategori aset'),
+
+                                            Forms\Components\TextInput::make('tax_amount')
+                                                ->label('Nilai Pajak')
+                                                ->required()
+                                                ->numeric()
+                                                ->prefix('Rp')
+                                                ->minValue(1)
+                                                ->placeholder('0'),
+
+                                            Forms\Components\DatePicker::make('due_date')
+                                                ->label('Tanggal Jatuh Tempo')
+                                                ->required()
+                                                ->native(false)
+                                                ->displayFormat('d/m/Y')
+                                                ->minDate(now())
+                                                ->helperText('Tanggal jatuh tempo pembayaran pajak'),
+
+                                            Forms\Components\Textarea::make('notes')
+                                                ->label('Catatan')
+                                                ->maxLength(500)
+                                                ->rows(2)
+                                                ->placeholder('Catatan tambahan tentang pajak ini...')
+                                                ->columnSpanFull(),
+                                        ])
+                                        ->columns(3)
+                                        ->itemLabel(fn (array $state): ?string => 
+                                            isset($state['tax_type_id']) 
+                                                ? MasterTaxType::find($state['tax_type_id'])?->name 
+                                                : 'Pajak Baru'
+                                        )
+                                        ->collapsible()
+                                        ->collapsed(false)
+                                        ->addActionLabel('+ Tambah Pajak Lain')
+                                        ->visible(fn (Forms\Get $get) => $get("items.{$item->id}.has_taxes") === true)
+                                        ->columnSpanFull()
+                                        ->helperText('Anda dapat menambahkan lebih dari satu jenis pajak'),
+                                ])
+                                ->visible(function () use ($item) {
+                                    // Only show if category has tax types
+                                    return MasterTaxType::where('asset_category_id', $item->category_id)
+                                        ->where('is_active', true)
+                                        ->exists();
+                                })
+                                ->columnSpanFull(),
+
                             Forms\Components\Placeholder::make("items.{$item->id}.preview")
                                 ->label('📋 Preview Nomor Aset')
                                 ->content(function () use ($item) {
@@ -413,7 +488,7 @@ class ProcessPurchase extends Page
                     ]);
 
                     // 2. Simpan ke Assets
-                    \App\Models\Asset::create([
+                    $createdAsset = \App\Models\Asset::create([
                         'assets_number' => $assetNumber,
                         'name' => $requestItem->asset_name,
                         'category_id' => $requestItem->category_id,
@@ -429,6 +504,25 @@ class ProcessPurchase extends Page
                         'desc' => $requestItem->notes ?? $record->desc,
                         'users_id' => auth()->id(),
                     ]);
+
+                    // 3. Simpan pajak jika ada (hanya untuk unit pertama per item)
+                    if ($i === 1 && isset($itemData['has_taxes']) && $itemData['has_taxes'] === true) {
+                        $taxes = $itemData['taxes'] ?? [];
+                        foreach ($taxes as $taxData) {
+                            $dueDate = new \DateTime($taxData['due_date']);
+                            \App\Models\AssetTax::create([
+                                'asset_id' => $createdAsset->id,
+                                'tax_type_id' => $taxData['tax_type_id'],
+                                'tax_year' => $dueDate->format('Y'),
+                                'tax_amount' => $taxData['tax_amount'],
+                                'due_date' => $taxData['due_date'],
+                                'payment_status' => 'pending',
+                                'approval_status' => 'pending',
+                                'penalty_amount' => 0,
+                                'notes' => $taxData['notes'] ?? null,
+                            ]);
+                        }
+                    }
 
                     $totalCreated++;
                 }
