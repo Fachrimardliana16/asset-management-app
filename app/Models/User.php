@@ -17,6 +17,7 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class User extends Authenticatable implements FilamentUser, MustVerifyEmail, HasAvatar, HasName, HasMedia
 {
@@ -35,6 +36,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail, Has
         'firstname',
         'lastname',
         'password',
+        'email_verified_at',
     ];
 
     /**
@@ -92,5 +94,13 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail, Has
         $this->addMediaConversion('thumb')
             ->fit(Fit::Contain, 300, 300)
             ->nonQueued();
+    }
+
+    /**
+     * Get the employee associated with the user
+     */
+    public function employee(): HasOne
+    {
+        return $this->hasOne(Employee::class, 'users_id');
     }
 }
