@@ -35,49 +35,74 @@ class EmployeeResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Section::make('Data Pegawai')
+                    ->description('Isi data pegawai dengan lengkap dan benar.')
+                    ->icon('heroicon-o-user-circle')
+                    ->collapsible()
+                    ->compact()
                     ->schema([
-                        Forms\Components\TextInput::make('nippam')
-                            ->label('NIP/NIPPAM')
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->maxLength(255),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\TextInput::make('nippam')
+                                    ->label('NIPPAM')
+                                    ->required()
+                                    ->unique(ignoreRecord: true)
+                                    ->maxLength(20)
+                                    ->placeholder('Contoh: 12345678')
+                                    ->helperText('Nomor Induk Pegawai PAM (unik, tidak boleh sama dengan yang lain)')
+                                    ->rules(['regex:/^\d{8,20}$/'])
+                                    ->validationMessages([
+                                        'regex' => 'NIPPAM harus berupa angka minimal 8 digit.',
+                                        'unique' => 'NIPPAM ini sudah digunakan oleh pegawai lain.',
+                                    ]),
 
-                        Forms\Components\TextInput::make('name')
-                            ->label('Nama')
-                            ->required()
-                            ->maxLength(255),
+                                Forms\Components\TextInput::make('name')
+                                    ->label('Nama Lengkap')
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->placeholder('Contoh: Budi Santoso')
+                                    ->helperText('Masukkan nama lengkap tanpa gelar'),
 
-                        Forms\Components\Select::make('departments_id')
-                            ->label('Bagian')
-                            ->options(MasterDepartments::pluck('name', 'id'))
-                            ->searchable()
-                            ->preload()
-                            ->live()
-                            ->afterStateUpdated(fn(Forms\Set $set) => $set('sub_department_id', null)),
+                                Forms\Components\Select::make('departments_id')
+                                    ->label('Bagian')
+                                    ->options(MasterDepartments::pluck('name', 'id'))
+                                    ->searchable()
+                                    ->preload()
+                                    ->live()
+                                    ->placeholder('Pilih bagian terlebih dahulu')
+                                    ->required()
+                                    ->afterStateUpdated(fn(Forms\Set $set) => $set('sub_department_id', null))
+                                    ->helperText('Pilih bagian unit kerja pegawai'),
 
-                        Forms\Components\Select::make('sub_department_id')
-                            ->label('Sub Bagian')
-                            ->options(function (Forms\Get $get) {
-                                $departmentId = $get('departments_id');
-                                if (!$departmentId) {
-                                    return [];
-                                }
-                                return MasterSubDepartments::where('departments_id', $departmentId)
-                                    ->pluck('name', 'id');
-                            })
-                            ->searchable()
-                            ->preload(),
-
+                                Forms\Components\Select::make('sub_department_id')
+                                    ->label('Sub Bagian')
+                                    ->options(function (Forms\Get $get) {
+                                        $departmentId = $get('departments_id');
+                                        if (!$departmentId) {
+                                            return [];
+                                        }
+                                        return MasterSubDepartments::where('departments_id', $departmentId)
+                                            ->pluck('name', 'id');
+                                    })
+                                    ->searchable()
+                                    ->preload()
+                                    ->placeholder('Pilih sub bagian')
+                                    ->disabled(fn(Forms\Get $get) => !$get('departments_id'))
+                                    ->dehydrated(fn(Forms\Get $get) => filled($get('departments_id')))
+                                    ->helperText('Akan muncul setelah memilih Bagian unit kerja'),
+                            ]),
                         Forms\Components\Select::make('employee_position_id')
                             ->label('Jabatan')
                             ->options(MasterEmployeePosition::pluck('name', 'id'))
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->required()
+                            ->placeholder('Pilih jabatan pegawai')
+                            ->helperText('Jabatan resmi pegawai di perusahaan'),
+                    ]),
 
-                        Forms\Components\Hidden::make('users_id')
-                            ->default(fn() => auth()->id()),
-                    ])
-                    ->columns(2),
+                // Section tersembunyi untuk user yang login (opsional ditampilkan kalau perlu)
+                Forms\Components\Hidden::make('users_id')
+                    ->default(fn() => auth()->id()),
             ]);
     }
 
@@ -86,7 +111,7 @@ class EmployeeResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('nippam')
-                    ->label('NIP/NIPPAM')
+                    ->label('NIPPAM')
                     ->searchable()
                     ->sortable(),
 
@@ -128,11 +153,21 @@ class EmployeeResource extends Resource
                     ->options(MasterSubDepartments::pluck('name', 'id'))
                     ->searchable()
                     ->preload(),
+
+                Tables\Filters\SelectFilter::make('employee_position_id')
+                    ->label('Jabatan')
+                    ->options(MasterEmployeePosition::pluck('name', 'id'))
+                    ->searchable()
+                    ->preload(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\DeleteAction::make(),
+                ])
+                    ->button()
+                    ->label('Action'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
