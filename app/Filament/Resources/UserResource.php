@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
 use App\Models\User;
+use App\Models\Employee;
 use App\Settings\MailSettings;
 use Exception;
 use Filament\Facades\Filament;
@@ -94,9 +95,36 @@ class UserResource extends Resource
                                     ->revealable()
                                     ->same('password')
                                     ->required(),
+                                Forms\Components\Toggle::make('verify_email_now')
+                                    ->label('Verifikasi Email Sekarang')
+                                    ->helperText('Centang untuk langsung memverifikasi email user saat dibuat')
+                                    ->default(false)
+                                    ->dehydrated(false)
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                                        if ($state) {
+                                            $set('email_verified_at', now());
+                                        } else {
+                                            $set('email_verified_at', null);
+                                        }
+                                    }),
+                                Forms\Components\Hidden::make('email_verified_at')
+                                    ->default(null)
+                                    ->dehydrated(),
                             ])
                             ->compact()
                             ->hidden(fn (string $operation): bool => $operation === 'edit'),
+                        Forms\Components\Section::make('Data Pegawai')
+                            ->schema([
+                                Forms\Components\Placeholder::make('employee_info')
+                                    ->label('Pegawai Terhubung')
+                                    ->content(fn (User $record): ?string => $record->employee 
+                                        ? "{$record->employee->name} (NIPPAM: {$record->employee->nippam})" 
+                                        : 'Tidak ada pegawai terhubung')
+                                    ->visible(fn (string $operation): bool => $operation === 'edit'),
+                            ])
+                            ->compact()
+                            ->visible(fn (string $operation): bool => $operation === 'edit'),
                         Forms\Components\Section::make()
                             ->schema([
                                 Forms\Components\Placeholder::make('email_verified_at')
@@ -138,6 +166,15 @@ class UserResource extends Resource
                     ->formatStateUsing(fn ($state): string => Str::headline($state))
                     ->colors(['info'])
                     ->badge(),
+                Tables\Columns\TextColumn::make('employee.name')
+                    ->label('Pegawai')
+                    ->searchable()
+                    ->sortable()
+                    ->placeholder('Tidak ada pegawai')
+                    ->formatStateUsing(fn ($state) => $state ?? 'Tidak ada pegawai')
+                    ->icon('heroicon-o-user-circle')
+                    ->badge()
+                    ->color(fn ($state) => $state ? 'success' : 'gray'),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email_verified_at')->label('Verified at')
@@ -156,8 +193,36 @@ class UserResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\Action::make('verify_email')
+                        ->label('Verify Email')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->modalHeading('Verifikasi Email')
+                        ->modalDescription('Apakah Anda yakin ingin memverifikasi email untuk user ini?')
+                        ->modalSubmitActionLabel('Ya, Verifikasi')
+                        ->action(function (User $record) {
+                            $record->update([
+                                'email_verified_at' => now(),
+                            ]);
+                            
+                            // Refresh record
+                            $record->refresh();
+                        })
+                        ->successNotification(
+                            Notification::make()
+                                ->success()
+                                ->title('Email Berhasil Diverifikasi')
+                                ->body('Email user telah diverifikasi dan kolom verified_at telah diisi.')
+                        )
+                        ->visible(fn (User $record) => $record->email_verified_at === null),
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\DeleteAction::make(),
+                ])
+                    ->button()
+                    ->label('Actions')
+                    ->icon('heroicon-m-ellipsis-vertical'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

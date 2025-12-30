@@ -20,9 +20,10 @@ class SubDepartmentsSeeder extends Seeder
             // Bagian Keuangan
             ['department_name' => 'Bagian Keuangan', 'sub_department_name' => 'Sub Bagian Anggaran dan Pendapatan'],
             ['department_name' => 'Bagian Keuangan', 'sub_department_name' => 'Sub Bagian Verifikasi Pembukuan'],
+            ['department_name' => 'Bagian Keuangan', 'sub_department_name' => 'Sub Bagian Gudang'],
 
             // Bagian Umum
-            ['department_name' => 'Bagian Umum', 'sub_department_name' => 'Sub Bagian Personalian'],
+            ['department_name' => 'Bagian Umum', 'sub_department_name' => 'Sub Bagian Kepegawaian'],
             ['department_name' => 'Bagian Umum', 'sub_department_name' => 'Sub Bagian Kerumah Tanggaan'],
             ['department_name' => 'Bagian Umum', 'sub_department_name' => 'Sub Bagian Informasi Teknologi'],
             ['department_name' => 'Bagian Umum', 'sub_department_name' => 'Sub Bagian Kesekertariatan dan Arsip'],

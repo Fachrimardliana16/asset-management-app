@@ -23,6 +23,14 @@ class MasterEmployeePositionSeeder extends Seeder
                 'desc' => 'Kepala sub bagian/unit kerja',
             ],
             [
+                'name' => 'Kepala Cabang',
+                'desc' => 'Kepala Cabang',
+            ],
+            [
+                'name' => 'Kepala Unit',
+                'desc' => 'Kepala Unit',
+            ],
+            [
                 'name' => 'Kepala Bagian',
                 'desc' => 'Kepala bagian/divisi',
             ],
