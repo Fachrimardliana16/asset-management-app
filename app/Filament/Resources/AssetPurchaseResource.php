@@ -60,7 +60,16 @@ class AssetPurchaseResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn($query) => $query->with(['items', 'purchases', 'department']))
+            ->modifyQueryUsing(fn($query) => $query->with([
+                'items.category',
+                'items.location', 
+                'items.subLocation',
+                'items.purchases',
+                'department',
+                'requestedBy',
+                'purchases.condition',
+                'purchases.status'
+            ]))
             ->columns([
                 // 1. No. DBP & Tanggal
                 TextColumn::make('document_number')
@@ -73,27 +82,40 @@ class AssetPurchaseResource extends Resource
                 TextColumn::make('items_summary')
                     ->label('Detail Barang')
                     ->html()
-                    ->formatStateUsing(function ($record) {
+                    ->state(function ($record) {
+                        // Gunakan eager loaded items
                         $items = $record->items;
-                        if ($items->isEmpty()) {
-                            return new HtmlString('<span class="text-gray-400 italic">Belum ada item</span>');
+                        
+                        if (!$items || $items->isEmpty()) {
+                            return '<span class="text-gray-500 italic text-sm">Belum ada item</span>';
                         }
 
-                        $summary = $items->take(2)->map(function ($item) {
-                            return "<div class='mb-1'>" .
-                                "<span class='font-medium'>{$item->asset_name}</span> " .
-                                "<span class='text-xs'>({$item->category?->name})</span> " .
-                                "<span class='text-xs text-gray-500'>{$item->quantity} unit</span>" .
-                                "</div>";
-                        })->join('');
-
-                        if ($items->count() > 2) {
-                            $more = $items->count() - 2;
-                            $summary .= "<div class='text-xs text-blue-600'>+{$more} item lainnya</div>";
+                        $summary = '<div class="space-y-2">';
+                        
+                        foreach ($items->take(3) as $item) {
+                            $categoryName = $item->category?->name ?? '-';
+                            $summary .= '<div class="flex flex-col border-l-2 border-primary-500 pl-2 py-1">';
+                            $summary .= '<div class="font-semibold text-sm" style="color: inherit;">' . e($item->asset_name) . '</div>';
+                            $summary .= '<div class="flex items-center gap-1.5 text-xs">';
+                            $summary .= '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-warning-100 text-warning-800">' . e($categoryName) . '</span>';
+                            $summary .= '<span style="color: inherit;">•</span>';
+                            $summary .= '<span class="font-medium text-success-600">' . e($item->quantity) . ' unit</span>';
+                            $summary .= '</div>';
+                            $summary .= '</div>';
                         }
+                        
+                        if ($items->count() > 3) {
+                            $more = $items->count() - 3;
+                            $summary .= '<div class="text-xs text-primary-600 font-medium pl-2 pt-1">+ ' . $more . ' item lainnya...</div>';
+                        }
+                        
+                        $summary .= '</div>';
 
-                        return new HtmlString($summary);
-                    }),
+                        return $summary;
+                    })
+                    ->searchable(false)
+                    ->sortable(false)
+                    ->wrap(),
 
                 // 3. Department & Pemohon
                 TextColumn::make('department.name')
@@ -102,10 +124,10 @@ class AssetPurchaseResource extends Resource
                     ->sortable()
                     ->toggleable(),
 
-                TextColumn::make('requestedBy')
+                TextColumn::make('requestedBy.name')
                     ->label('Pemohon')
-                    ->formatStateUsing(fn($record) => $record->requestedBy ? ($record->requestedBy->firstname . ' ' . $record->requestedBy->lastname) : '-')
                     ->sortable()
+                    ->searchable()
                     ->toggleable(),
 
                 // 4. Total Items & Quantity

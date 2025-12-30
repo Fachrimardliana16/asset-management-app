@@ -30,6 +30,20 @@ class AssetRequestsResource extends Resource
     protected static ?string $pluralModelLabel = 'Permintaan Barang';
     protected static ?int $navigationSort = 1;
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with([
+                'items.category',
+                'items.location',
+                'items.subLocation',
+                'items.purchases',
+                'department',
+                'requestedBy',
+                'user'
+            ]);
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -61,16 +75,24 @@ class AssetRequestsResource extends Resource
                                     ->label('Departemen')
                                     ->searchable()
                                     ->preload()
-                                    ->required(),
+                                    ->required()
+                                    ->live()
+                                    ->afterStateUpdated(fn($set) => $set('requested_by', null)),
 
                                 Forms\Components\Select::make('requested_by')
-                                    ->relationship('requestedBy', 'username')
                                     ->label('Pemohon')
+                                    ->options(fn(Get $get) => 
+                                        $get('department_id')
+                                            ? \App\Models\Employee::where('departments_id', $get('department_id'))
+                                                ->orderBy('name')
+                                                ->get()
+                                                ->pluck('name', 'id')
+                                            : []
+                                    )
                                     ->searchable()
-                                    ->preload()
+                                    ->preload(false)
                                     ->required()
-                                    ->default(auth()->id())
-                                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->firstname . ' ' . $record->lastname),
+                                    ->placeholder('Pilih departemen terlebih dahulu...'),
                             ]),
 
                         Forms\Components\Textarea::make('desc')
@@ -293,6 +315,13 @@ class AssetRequestsResource extends Resource
                     ->sortable()
                     ->toggleable(),
 
+                // Pemohon
+                Tables\Columns\TextColumn::make('requestedBy.name')
+                    ->label('Pemohon')
+                    ->sortable()
+                    ->searchable()
+                    ->toggleable(),
+
                 // Status Pembelian
                 Tables\Columns\TextColumn::make('purchase_status')
                     ->label('Status')
@@ -381,6 +410,7 @@ class AssetRequestsResource extends Resource
         return [
             'index'  => Pages\ListAssetRequests::route('/'),
             'create' => Pages\CreateAssetRequests::route('/create'),
+            'view'   => Pages\ViewAssetRequests::route('/{record}'),
             'edit'   => Pages\EditAssetRequests::route('/{record}/edit'),
         ];
     }
