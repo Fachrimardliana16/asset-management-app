@@ -87,4 +87,39 @@ class Asset extends Model
     {
         return $this->belongsTo(MasterAssetsTransactionStatus::class, 'transaction_status_id', 'id');
     }
+
+    /**
+     * Get all taxes for this asset
+     */
+    public function taxes()
+    {
+        return $this->hasMany(AssetTax::class, 'asset_id', 'id');
+    }
+
+    /**
+     * Get active/unpaid taxes for this asset
+     */
+    public function activeTaxes()
+    {
+        return $this->hasMany(AssetTax::class, 'asset_id', 'id')
+            ->whereIn('payment_status', ['pending', 'overdue']);
+    }
+
+    /**
+     * Get paid taxes for this asset
+     */
+    public function paidTaxes()
+    {
+        return $this->hasMany(AssetTax::class, 'asset_id', 'id')
+            ->where('payment_status', 'paid');
+    }
+
+    /**
+     * Get latest tax for this asset
+     */
+    public function latestTax()
+    {
+        return $this->hasOne(AssetTax::class, 'asset_id', 'id')
+            ->latestOfMany();
+    }
 }

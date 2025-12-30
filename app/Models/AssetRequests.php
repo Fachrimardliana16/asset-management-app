@@ -63,11 +63,11 @@ class AssetRequests extends Model
     }
 
     /**
-     * Relasi ke User Pemohon
+     * Relasi ke Employee Pemohon
      */
     public function requestedBy()
     {
-        return $this->belongsTo(User::class, 'requested_by');
+        return $this->belongsTo(Employee::class, 'requested_by');
     }
 
     /**

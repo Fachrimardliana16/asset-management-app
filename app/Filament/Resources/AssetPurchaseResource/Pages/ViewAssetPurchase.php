@@ -71,190 +71,158 @@ class ViewAssetPurchase extends ViewRecord
                     ->icon('heroicon-o-clipboard-document-list')
                     ->collapsible(),
 
-                Components\Section::make('Detail Barang')
+                Components\Section::make('Pemohon & Departemen')
                     ->schema([
-                        Components\Grid::make(3)
+                        Components\Grid::make(2)
+                            ->schema([
+                                Components\TextEntry::make('requestedBy.name')
+                                    ->label('Pemohon')
+                                    ->icon('heroicon-m-user')
+                                    ->badge()
+                                    ->color('success'),
+
+                                Components\TextEntry::make('department.name')
+                                    ->label('Departemen')
+                                    ->icon('heroicon-m-building-office-2')
+                                    ->badge()
+                                    ->color('info'),
+                            ]),
+
+                        Components\TextEntry::make('desc')
+                            ->label('Keterangan Umum')
+                            ->columnSpanFull()
+                            ->placeholder('Tidak ada keterangan'),
+                    ])
+                    ->icon('heroicon-o-users')
+                    ->collapsible(),
+
+                Components\Section::make('Detail Barang yang Diminta')
+                    ->description('Daftar barang yang diminta untuk dibeli')
+                    ->schema([
+                        Components\RepeatableEntry::make('items')
+                            ->label('')
                             ->schema([
                                 Components\TextEntry::make('asset_name')
                                     ->label('Nama Barang')
                                     ->icon('heroicon-m-cube')
                                     ->size('lg')
                                     ->weight('bold')
-                                    ->columnSpan(2),
+                                    ->color('primary'),
 
-                                Components\TextEntry::make('quantity')
-                                    ->label('Jumlah')
-                                    ->icon('heroicon-m-calculator')
-                                    ->suffix(' unit')
+                                Components\Grid::make(4)
+                                    ->schema([
+                                        Components\TextEntry::make('category.name')
+                                            ->label('Kategori')
+                                            ->icon('heroicon-m-tag')
+                                            ->badge()
+                                            ->color('warning'),
+
+                                        Components\TextEntry::make('quantity')
+                                            ->label('Jumlah')
+                                            ->icon('heroicon-m-calculator')
+                                            ->suffix(' unit')
+                                            ->badge()
+                                            ->color('success'),
+
+                                        Components\TextEntry::make('location.name')
+                                            ->label('Lokasi')
+                                            ->icon('heroicon-m-building-office-2'),
+
+                                        Components\TextEntry::make('subLocation.name')
+                                            ->label('Sub Lokasi')
+                                            ->icon('heroicon-m-map-pin')
+                                            ->placeholder('Tidak ada sub lokasi'),
+                                    ]),
+
+                                Components\Grid::make(2)
+                                    ->schema([
+                                        Components\TextEntry::make('purpose')
+                                            ->label('Keperluan')
+                                            ->icon('heroicon-m-information-circle'),
+
+                                        Components\TextEntry::make('notes')
+                                            ->label('Catatan Item')
+                                            ->placeholder('Tidak ada catatan'),
+                                    ]),
+
+                                Components\TextEntry::make('purchase_status')
+                                    ->label('Status Pembelian Item')
                                     ->badge()
-                                    ->color('info'),
-                            ]),
+                                    ->formatStateUsing(fn($state) => match ($state) {
+                                        'pending' => 'Menunggu',
+                                        'partial' => 'Sebagian',
+                                        'complete' => 'Selesai',
+                                        default => 'Menunggu',
+                                    })
+                                    ->color(fn($state) => match ($state) {
+                                        'pending' => 'warning',
+                                        'partial' => 'info',
+                                        'complete' => 'success',
+                                        default => 'warning',
+                                    })
+                                    ->icon(fn($state) => match ($state) {
+                                        'pending' => 'heroicon-o-clock',
+                                        'partial' => 'heroicon-o-arrow-path',
+                                        'complete' => 'heroicon-o-check-circle',
+                                        default => 'heroicon-o-clock',
+                                    }),
+                            ])
+                            ->columnSpanFull()
+                            ->contained(true),
 
                         Components\Grid::make(2)
                             ->schema([
-                                Components\TextEntry::make('category.name')
-                                    ->label('Kategori')
-                                    ->icon('heroicon-m-tag')
+                                Components\TextEntry::make('total_items')
+                                    ->label('Total Jenis Barang')
+                                    ->suffix(' jenis')
+                                    ->badge()
+                                    ->color('info')
+                                    ->icon('heroicon-o-cube'),
+
+                                Components\TextEntry::make('total_quantity')
+                                    ->label('Total Unit')
+                                    ->suffix(' unit')
                                     ->badge()
                                     ->color('success')
-                                    ->formatStateUsing(
-                                        fn($record) =>
-                                        $record->category?->name . ' (' . $record->category?->kode . ')'
-                                    ),
-
-                                Components\TextEntry::make('purpose')
-                                    ->label('Keperluan')
-                                    ->icon('heroicon-m-information-circle'),
+                                    ->icon('heroicon-o-calculator'),
                             ]),
-
-                        Components\TextEntry::make('desc')
-                            ->label('Keterangan')
-                            ->columnSpanFull()
-                            ->placeholder('Tidak ada keterangan'),
                     ])
                     ->icon('heroicon-o-cube')
                     ->collapsible(),
 
-                Components\Section::make('Pemohon & Lokasi')
-                    ->schema([
-                        Components\Grid::make(2)
-                            ->schema([
-                                Components\TextEntry::make('employee.name')
-                                    ->label('Pemohon')
-                                    ->icon('heroicon-m-user'),
-
-                                Components\TextEntry::make('location.name')
-                                    ->label('Lokasi')
-                                    ->icon('heroicon-m-building-office-2')
-                                    ->formatStateUsing(
-                                        fn($record) =>
-                                        $record->location?->name . ' (' . $record->location?->kode . ')'
-                                    ),
-                            ]),
-
-                        Components\TextEntry::make('subLocation.name')
-                            ->label('Sub Lokasi')
-                            ->icon('heroicon-m-map-pin')
-                            ->placeholder('Tidak ada sub lokasi'),
-                    ])
-                    ->icon('heroicon-o-users')
-                    ->collapsible(),
-
-                Components\Section::make('Informasi Pembelian')
+                Components\Section::make('Ringkasan Pembelian')
+                    ->description('Total pembelian yang sudah diproses')
                     ->schema([
                         Components\Grid::make(3)
                             ->schema([
-                                Components\TextEntry::make('purchase_date')
-                                    ->label('Tanggal Pembelian')
-                                    ->icon('heroicon-m-calendar-days')
-                                    ->date('d F Y')
-                                    ->placeholder('Belum dibeli')
+                                Components\TextEntry::make('purchased_items_count')
+                                    ->label('Barang Terbeli')
+                                    ->icon('heroicon-o-check-circle')
+                                    ->badge()
+                                    ->color('success')
                                     ->getStateUsing(function ($record) {
-                                        if ($record->purchase_status === 'purchased') {
-                                            $purchase = AssetPurchase::where('assetrequest_id', $record->id)->first();
-                                            return $purchase?->purchase_date;
-                                        }
-                                        return null;
+                                        $purchasedCount = $record->purchases()->count();
+                                        $totalQuantity = $record->total_quantity;
+                                        return "{$purchasedCount} / {$totalQuantity} unit";
                                     }),
 
-                                Components\TextEntry::make('brand')
-                                    ->label('Merk / Tipe')
-                                    ->icon('heroicon-m-sparkles')
-                                    ->placeholder('Belum dibeli')
-                                    ->getStateUsing(function ($record) {
-                                        if ($record->purchase_status === 'purchased') {
-                                            $purchase = AssetPurchase::where('assetrequest_id', $record->id)->first();
-                                            return $purchase?->brand;
-                                        }
-                                        return null;
-                                    }),
-
-                                Components\TextEntry::make('funding_source')
-                                    ->label('Sumber Dana')
-                                    ->icon('heroicon-m-banknotes')
-                                    ->placeholder('Belum dibeli')
-                                    ->getStateUsing(function ($record) {
-                                        if ($record->purchase_status === 'purchased') {
-                                            $purchase = AssetPurchase::where('assetrequest_id', $record->id)->first();
-                                            return $purchase?->funding_source;
-                                        }
-                                        return null;
-                                    }),
-                            ]),
-
-                        Components\Grid::make(3)
-                            ->schema([
-                                Components\TextEntry::make('price')
-                                    ->label('Harga Satuan')
+                                Components\TextEntry::make('total_spent')
+                                    ->label('Total Pengeluaran')
                                     ->icon('heroicon-m-currency-dollar')
                                     ->money('IDR')
-                                    ->placeholder('Belum dibeli')
-                                    ->color('success')
-                                    ->weight('bold')
-                                    ->getStateUsing(function ($record) {
-                                        if ($record->purchase_status === 'purchased') {
-                                            $purchase = AssetPurchase::where('assetrequest_id', $record->id)->first();
-                                            return $purchase?->price;
-                                        }
-                                        return null;
-                                    }),
-
-                                Components\TextEntry::make('total_price')
-                                    ->label('Total Harga')
-                                    ->icon('heroicon-m-calculator')
-                                    ->money('IDR')
-                                    ->placeholder('Belum dibeli')
                                     ->color('warning')
                                     ->weight('bold')
                                     ->getStateUsing(function ($record) {
-                                        if ($record->purchase_status === 'purchased') {
-                                            $purchase = AssetPurchase::where('assetrequest_id', $record->id)->first();
-                                            return $purchase ? ($purchase->price * $record->quantity) : null;
-                                        }
-                                        return null;
+                                        return $record->purchases()->sum('price');
                                     }),
 
-                                Components\TextEntry::make('book_value')
-                                    ->label('Nilai Buku')
-                                    ->icon('heroicon-m-book-open')
-                                    ->money('IDR')
-                                    ->placeholder('Belum dibeli')
-                                    ->getStateUsing(function ($record) {
-                                        if ($record->purchase_status === 'purchased') {
-                                            $purchase = AssetPurchase::where('assetrequest_id', $record->id)->first();
-                                            return $purchase?->book_value;
-                                        }
-                                        return null;
-                                    }),
-                            ]),
-
-                        Components\Grid::make(2)
-                            ->schema([
-                                Components\TextEntry::make('condition.name')
-                                    ->label('Kondisi Aset')
-                                    ->icon('heroicon-m-shield-check')
+                                Components\TextEntry::make('purchase_progress')
+                                    ->label('Progress')
+                                    ->icon('heroicon-o-chart-bar')
                                     ->badge()
-                                    ->placeholder('Belum dibeli')
+                                    ->color(fn($record) => $record->purchase_progress >= 100 ? 'success' : 'info')
                                     ->getStateUsing(function ($record) {
-                                        if ($record->purchase_status === 'purchased') {
-                                            $purchase = AssetPurchase::where('assetrequest_id', $record->id)->first();
-                                            return $purchase?->condition?->name;
-                                        }
-                                        return null;
-                                    }),
-
-                                Components\TextEntry::make('status.name')
-                                    ->label('Status Aset')
-                                    ->icon('heroicon-m-check-badge')
-                                    ->badge()
-                                    ->color('success')
-                                    ->placeholder('Belum dibeli')
-                                    ->getStateUsing(function ($record) {
-                                        if ($record->purchase_status === 'purchased') {
-                                            $purchase = AssetPurchase::where('assetrequest_id', $record->id)->first();
-                                            return $purchase?->status?->name;
-                                        }
-                                        return null;
+                                        return "{$record->purchase_progress}%";
                                     }),
                             ]),
 
@@ -262,71 +230,87 @@ class ViewAssetPurchase extends ViewRecord
                             ->label('Catatan Pembelian')
                             ->icon('heroicon-m-pencil-square')
                             ->columnSpanFull()
-                            ->placeholder('Tidak ada catatan')
-                            ->getStateUsing(function ($record) {
-                                return $record->purchase_notes;
-                            }),
+                            ->placeholder('Tidak ada catatan'),
                     ])
                     ->icon('heroicon-o-shopping-cart')
-                    ->visible(fn($record) => $record->purchase_status === 'purchased')
+                    ->visible(fn($record) => $record->purchases()->count() > 0)
                     ->collapsible(),
 
-                Components\Section::make('Aset yang Dibuat')
+                Components\Section::make('Detail Aset yang Sudah Dibeli')
+                    ->description('Daftar aset yang sudah dibeli dari permintaan ini')
                     ->schema([
-                        Components\TextEntry::make('asset_numbers')
-                            ->label('Nomor Aset')
-                            ->html()
-                            ->getStateUsing(function ($record) {
-                                if ($record->purchase_status === 'purchased') {
-                                    $purchases = AssetPurchase::where('assetrequest_id', $record->id)
-                                        ->orderBy('item_index')
-                                        ->get();
+                        Components\RepeatableEntry::make('purchases')
+                            ->label('')
+                            ->schema([
+                                Components\Grid::make(4)
+                                    ->schema([
+                                        Components\TextEntry::make('assets_number')
+                                            ->label('Nomor Aset')
+                                            ->badge()
+                                            ->color('primary')
+                                            ->icon('heroicon-o-hashtag')
+                                            ->weight('bold'),
 
-                                    $html = '<div class="space-y-1">';
-                                    foreach ($purchases as $purchase) {
-                                        $html .= '<div class="flex items-center gap-2">';
-                                        $html .= '<span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded text-primary-700 bg-primary-50">';
-                                        $html .= $purchase->assets_number;
-                                        $html .= '</span>';
-                                        $html .= '</div>';
-                                    }
-                                    $html .= '</div>';
-                                    return new HtmlString($html);
-                                }
-                                return 'Belum ada aset yang dibuat';
-                            })
-                            ->columnSpanFull(),
+                                        Components\TextEntry::make('brand')
+                                            ->label('Merk/Tipe')
+                                            ->icon('heroicon-m-sparkles')
+                                            ->placeholder('-'),
+
+                                        Components\TextEntry::make('price')
+                                            ->label('Harga')
+                                            ->money('IDR')
+                                            ->icon('heroicon-m-currency-dollar')
+                                            ->color('success')
+                                            ->weight('bold'),
+
+                                        Components\TextEntry::make('purchase_date')
+                                            ->label('Tgl Pembelian')
+                                            ->date('d M Y')
+                                            ->icon('heroicon-m-calendar'),
+                                    ]),
+
+                                Components\Grid::make(3)
+                                    ->schema([
+                                        Components\TextEntry::make('funding_source')
+                                            ->label('Sumber Dana')
+                                            ->icon('heroicon-m-banknotes')
+                                            ->placeholder('-'),
+
+                                        Components\TextEntry::make('condition.name')
+                                            ->label('Kondisi')
+                                            ->badge()
+                                            ->icon('heroicon-m-shield-check')
+                                            ->placeholder('-'),
+
+                                        Components\TextEntry::make('status.name')
+                                            ->label('Status')
+                                            ->badge()
+                                            ->color('success')
+                                            ->icon('heroicon-m-check-badge')
+                                            ->placeholder('-'),
+                                    ]),
+
+                                Components\ImageEntry::make('img')
+                                    ->label('Foto Aset')
+                                    ->height(150)
+                                    ->visible(fn($record) => $record->img !== null),
+                            ])
+                            ->columnSpanFull()
+                            ->contained(true),
                     ])
                     ->icon('heroicon-o-queue-list')
-                    ->visible(fn($record) => $record->purchase_status === 'purchased')
+                    ->visible(fn($record) => $record->purchases()->count() > 0)
                     ->collapsible(),
 
-                Components\Section::make('Lampiran')
+                Components\Section::make('Lampiran Permintaan')
                     ->schema([
                         Components\ImageEntry::make('docs')
                             ->label('Dokumen Lampiran')
-                            ->columnSpanFull()
-                            ->visible(fn($record) => $record->docs !== null),
-
-                        Components\ImageEntry::make('img')
-                            ->label('Foto Aset')
-                            ->columnSpanFull()
-                            ->visible(function ($record) {
-                                if ($record->purchase_status === 'purchased') {
-                                    $purchase = AssetPurchase::where('assetrequest_id', $record->id)->first();
-                                    return $purchase?->img !== null;
-                                }
-                                return false;
-                            })
-                            ->getStateUsing(function ($record) {
-                                if ($record->purchase_status === 'purchased') {
-                                    $purchase = AssetPurchase::where('assetrequest_id', $record->id)->first();
-                                    return $purchase?->img;
-                                }
-                                return null;
-                            }),
+                            ->height(200)
+                            ->columnSpanFull(),
                     ])
                     ->icon('heroicon-o-photo')
+                    ->visible(fn($record) => $record->docs !== null)
                     ->collapsible()
                     ->collapsed(),
 
