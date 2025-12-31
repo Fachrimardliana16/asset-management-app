@@ -24,7 +24,7 @@ class AssetDisposalResource extends Resource
     protected static ?string $navigationLabel = 'Penghapusan Barang';
     protected static ?string $modelLabel = 'Penghapusan Barang';
     protected static ?string $pluralModelLabel = 'Penghapusan Barang';
-    protected static ?int $navigationSort = 8;
+    protected static ?int $navigationSort = 9;
 
     public static function form(Form $form): Form
     {
