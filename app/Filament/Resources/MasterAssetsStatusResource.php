@@ -17,7 +17,7 @@ class MasterAssetsStatusResource extends Resource
 {
     protected static ?string $model = MasterAssetsStatus::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-information-circle';
     protected static ?string $navigationGroup = 'Master Aset';
     protected static ?string $navigationLabel = 'Status';
 

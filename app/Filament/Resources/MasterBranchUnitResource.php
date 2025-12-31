@@ -18,7 +18,7 @@ class MasterBranchUnitResource extends Resource
 {
     protected static ?string $model = MasterBranchUnit::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-squares-plus';
     protected static ?string $navigationGroup = 'Master';
     protected static ?string $navigationLabel = 'Unit';
     protected static ?int $navigationSort = 1;

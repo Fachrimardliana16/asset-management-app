@@ -30,6 +30,8 @@ class AssetPurchase extends Model
         'book_value',
         'book_value_expiry',
         'funding_source',
+        'vendor',
+        'purchase_location',
         'purchase_notes',
         'brand',
         'item_index',

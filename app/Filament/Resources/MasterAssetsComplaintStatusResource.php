@@ -18,7 +18,7 @@ class MasterAssetsComplaintStatusResource extends Resource
 {
     protected static ?string $model = MasterAssetsComplaintStatus::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-exclamation-triangle';
     protected static ?string $navigationGroup = 'Master Aset';
     protected static ?string $navigationLabel = 'Status Aduan';
 

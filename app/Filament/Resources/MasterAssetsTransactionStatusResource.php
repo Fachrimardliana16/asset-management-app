@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class MasterAssetsTransactionStatusResource extends Resource
 {
     protected static ?string $model = MasterAssetsTransactionStatus::class;
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-arrows-right-left';
     protected static ?string $navigationGroup = 'Master Aset';
     protected static ?string $navigationLabel = 'Status Transaksi';
 

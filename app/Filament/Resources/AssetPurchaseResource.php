@@ -25,6 +25,24 @@ class AssetPurchaseResource extends Resource
     protected static ?string $pluralModelLabel = 'Pembelian Barang';
     protected static ?int $navigationSort = 2;
 
+    public static function getNavigationBadge(): ?string
+    {
+        static $count = null;
+        if ($count === null) {
+            $count = static::getModel()::where('purchase_status', 'pending')->count();
+        }
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        static $count = null;
+        if ($count === null) {
+            $count = static::getModel()::where('purchase_status', 'pending')->count();
+        }
+        return $count > 0 ? 'warning' : null;
+    }
+
     public static function canCreate(): bool
     {
         return false;
@@ -62,7 +80,7 @@ class AssetPurchaseResource extends Resource
         return $table
             ->modifyQueryUsing(fn($query) => $query->with([
                 'items.category',
-                'items.location', 
+                'items.location',
                 'items.subLocation',
                 'items.purchases',
                 'department',
@@ -85,13 +103,13 @@ class AssetPurchaseResource extends Resource
                     ->state(function ($record) {
                         // Gunakan eager loaded items
                         $items = $record->items;
-                        
+
                         if (!$items || $items->isEmpty()) {
                             return '<span class="text-gray-500 italic text-sm">Belum ada item</span>';
                         }
 
                         $summary = '<div class="space-y-2">';
-                        
+
                         foreach ($items->take(3) as $item) {
                             $categoryName = $item->category?->name ?? '-';
                             $summary .= '<div class="flex flex-col border-l-2 border-primary-500 pl-2 py-1">';
@@ -103,12 +121,12 @@ class AssetPurchaseResource extends Resource
                             $summary .= '</div>';
                             $summary .= '</div>';
                         }
-                        
+
                         if ($items->count() > 3) {
                             $more = $items->count() - 3;
                             $summary .= '<div class="text-xs text-primary-600 font-medium pl-2 pt-1">+ ' . $more . ' item lainnya...</div>';
                         }
-                        
+
                         $summary .= '</div>';
 
                         return $summary;
@@ -149,16 +167,16 @@ class AssetPurchaseResource extends Resource
                         $totalQty = $record->total_quantity;
                         $purchasedQty = $record->purchases()->count();
                         $percentage = $totalQty > 0 ? min(100, ($purchasedQty / $totalQty) * 100) : 0;
-                        
+
                         $color = $percentage === 0 ? 'gray' : ($percentage === 100 ? 'green' : 'blue');
-                        
+
                         return new HtmlString(
                             "<div class='flex items-center gap-2'>" .
                                 "<div class='flex-1 bg-gray-200 rounded-full h-2'>" .
-                                    "<div class='bg-{$color}-600 h-2 rounded-full' style='width: {$percentage}%'></div>" .
+                                "<div class='bg-{$color}-600 h-2 rounded-full' style='width: {$percentage}%'></div>" .
                                 "</div>" .
                                 "<span class='text-xs font-medium'>{$purchasedQty}/{$totalQty}</span>" .
-                            "</div>"
+                                "</div>"
                         );
                     }),
 

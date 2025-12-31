@@ -46,7 +46,9 @@ class ListUsers extends ListRecords
     protected function getTableQuery(): Builder
     {
         $user = auth()->user();
-        $model = (new (static::$resource::getModel()))->with('roles')->where('id', '!=', auth()->user()->id);
+        $model = (new (static::$resource::getModel()))
+            ->with(['roles', 'employee'])
+            ->where('id', '!=', auth()->user()->id);
 
         if (!$user->isSuperAdmin()) {
             $model = $model->whereDoesntHave('roles', function ($query) {

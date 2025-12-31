@@ -30,7 +30,7 @@ class ProcessPurchase extends Page
     public function mount(AssetRequests $record): void
     {
         $this->record = $record;
-        
+
         // Check if already purchased
         if ($record->purchase_status === 'purchased') {
             Notification::make()
@@ -38,7 +38,7 @@ class ProcessPurchase extends Page
                 ->title('Pembelian Sudah Diproses')
                 ->body('Permintaan ini sudah diproses sebelumnya.')
                 ->send();
-            
+
             $this->redirect(AssetPurchaseResource::getUrl('index'));
             return;
         }
@@ -61,10 +61,10 @@ class ProcessPurchase extends Page
                         </x-filament::button>
                     BLADE)))
                     ->nextAction(
-                        fn (\Filament\Forms\Components\Actions\Action $action) => $action->label('Lanjutkan')->icon('heroicon-m-arrow-right')->iconPosition('after')
+                        fn(\Filament\Forms\Components\Actions\Action $action) => $action->label('Lanjutkan')->icon('heroicon-m-arrow-right')->iconPosition('after')
                     )
                     ->previousAction(
-                        fn (\Filament\Forms\Components\Actions\Action $action) => $action->label('Kembali')->icon('heroicon-m-arrow-left')
+                        fn(\Filament\Forms\Components\Actions\Action $action) => $action->label('Kembali')->icon('heroicon-m-arrow-left')
                     )
                     ->skippable(false)
                     ->persistStepInQueryString('step')
@@ -117,17 +117,17 @@ class ProcessPurchase extends Page
                             ->label('Daftar Barang')
                             ->content(new HtmlString(
                                 '<div class="space-y-2 mt-2">' .
-                                collect($record->items)->map(function($item, $index) {
-                                    return '<div class="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">' .
-                                        '<span class="flex items-center justify-center w-8 h-8 bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300 rounded-full font-semibold text-sm">' . ($index + 1) . '</span>' .
-                                        '<div class="flex-1">' .
-                                        '<span class="font-medium text-gray-900 dark:text-gray-100">' . $item->asset_name . '</span>' .
-                                        '<span class="text-xs text-gray-500 dark:text-gray-400 ml-2">(' . ($item->category?->name ?? '-') . ')</span>' .
-                                        '</div>' .
-                                        '<span class="ml-auto text-sm font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/50 px-3 py-1 rounded-full">' . $item->quantity . ' unit</span>' .
-                                        '</div>';
-                                })->join('') .
-                                '</div>'
+                                    collect($record->items)->map(function ($item, $index) {
+                                        return '<div class="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">' .
+                                            '<span class="flex items-center justify-center w-8 h-8 bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300 rounded-full font-semibold text-sm">' . ($index + 1) . '</span>' .
+                                            '<div class="flex-1">' .
+                                            '<span class="font-medium text-gray-900 dark:text-gray-100">' . $item->asset_name . '</span>' .
+                                            '<span class="text-xs text-gray-500 dark:text-gray-400 ml-2">(' . ($item->category?->name ?? '-') . ')</span>' .
+                                            '</div>' .
+                                            '<span class="ml-auto text-sm font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/50 px-3 py-1 rounded-full">' . $item->quantity . ' unit</span>' .
+                                            '</div>';
+                                    })->join('') .
+                                    '</div>'
                             ))
                             ->columnSpanFull(),
                     ])
@@ -169,7 +169,7 @@ class ProcessPurchase extends Page
                                     return \App\Models\MasterAssetsCondition::where('name', 'like', '%baru%')->first()?->id;
                                 }),
                         ]),
-                        Forms\Components\Grid::make(3)->schema([
+                        Forms\Components\Grid::make(2)->schema([
                             Forms\Components\Select::make('status_id')
                                 ->label('Status Aset')
                                 ->options(\App\Models\MasterAssetsStatus::pluck('name', 'id'))
@@ -186,6 +186,21 @@ class ProcessPurchase extends Page
                                 ->label('Habis Nilai Buku')
                                 ->default(now()->addYears(5))
                                 ->native(false),
+
+
+                        ]),
+                        Forms\Components\Grid::make(2)->schema([
+                            Forms\Components\TextInput::make('purchase_location')
+                                ->label('Lokasi Pembelian')
+                                ->maxLength(255)
+                                ->placeholder('Contoh: Toko ABC, Jakarta Pusat')
+                                ->helperText('Lokasi atau tempat pembelian dilakukan'),
+
+                            Forms\Components\TextInput::make('vendor')
+                                ->label('Vendor / Supplier')
+                                ->maxLength(255)
+                                ->placeholder('Contoh: PT. ABC Supplier')
+                                ->helperText('Nama vendor atau supplier yang menyediakan barang'),
 
                             Forms\Components\Textarea::make('purchase_notes')
                                 ->label('Catatan Pembelian')
@@ -217,13 +232,13 @@ class ProcessPurchase extends Page
                                 ->label('📌 Penting')
                                 ->content(new HtmlString(
                                     "<div class='text-sm bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 p-4 rounded-lg'>" .
-                                    "<p class='font-semibold text-blue-900 dark:text-blue-100 mb-2'>Lengkapi data untuk setiap unit aset:</p>" .
-                                    "<ul class='list-disc list-inside space-y-1 text-blue-800 dark:text-blue-200'>" .
-                                    "<li>Setiap unit akan mendapat <strong>nomor aset unik</strong></li>" .
-                                    "<li>Upload <strong>foto berbeda</strong> untuk setiap unit</li>" .
-                                    "<li>Total unit yang harus diinput: <strong>{$item->quantity} unit</strong></li>" .
-                                    "</ul>" .
-                                    "</div>"
+                                        "<p class='font-semibold text-blue-900 dark:text-blue-100 mb-2'>Lengkapi data untuk setiap unit aset:</p>" .
+                                        "<ul class='list-disc list-inside space-y-1 text-blue-800 dark:text-blue-200'>" .
+                                        "<li>Setiap unit akan mendapat <strong>nomor aset unik</strong></li>" .
+                                        "<li>Upload <strong>foto berbeda</strong> untuk setiap unit</li>" .
+                                        "<li>Total unit yang harus diinput: <strong>{$item->quantity} unit</strong></li>" .
+                                        "</ul>" .
+                                        "</div>"
                                 ))
                                 ->columnSpanFull(),
 
@@ -271,7 +286,7 @@ class ProcessPurchase extends Page
                                 ->defaultItems($item->quantity)
                                 ->minItems($item->quantity)
                                 ->maxItems($item->quantity)
-                                ->itemLabel(fn ($state): ?string => isset($state['brand']) ? "Unit: {$state['brand']}" : null)
+                                ->itemLabel(fn($state): ?string => isset($state['brand']) ? "Unit: {$state['brand']}" : null)
                                 ->collapsible()
                                 ->collapsed(false)
                                 ->addable(false)
@@ -333,15 +348,16 @@ class ProcessPurchase extends Page
                                                 ->columnSpanFull(),
                                         ])
                                         ->columns(3)
-                                        ->itemLabel(fn (array $state): ?string => 
-                                            isset($state['tax_type_id']) 
-                                                ? MasterTaxType::find($state['tax_type_id'])?->name 
+                                        ->itemLabel(
+                                            fn(array $state): ?string =>
+                                            isset($state['tax_type_id'])
+                                                ? MasterTaxType::find($state['tax_type_id'])?->name
                                                 : 'Pajak Baru'
                                         )
                                         ->collapsible()
                                         ->collapsed(false)
                                         ->addActionLabel('+ Tambah Pajak Lain')
-                                        ->visible(fn (Forms\Get $get) => $get("items.{$item->id}.has_taxes") === true)
+                                        ->visible(fn(Forms\Get $get) => $get("items.{$item->id}.has_taxes") === true)
                                         ->columnSpanFull()
                                         ->helperText('Anda dapat menambahkan lebih dari satu jenis pajak'),
                                 ])
@@ -364,9 +380,9 @@ class ProcessPurchase extends Page
                                     );
                                     return new HtmlString(
                                         '<div class="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg border border-gray-200 dark:border-gray-700">' .
-                                        '<p class="text-xs text-gray-600 dark:text-gray-400 mb-2 font-medium">Nomor aset yang akan dibuat:</p>' .
-                                        '<code class="text-sm text-gray-800 dark:text-gray-200 font-mono leading-relaxed">' . implode('<br>', $preview) . '</code>' .
-                                        '</div>'
+                                            '<p class="text-xs text-gray-600 dark:text-gray-400 mb-2 font-medium">Nomor aset yang akan dibuat:</p>' .
+                                            '<code class="text-sm text-gray-800 dark:text-gray-200 font-mono leading-relaxed">' . implode('<br>', $preview) . '</code>' .
+                                            '</div>'
                                     );
                                 })
                                 ->columnSpanFull(),
@@ -390,20 +406,20 @@ class ProcessPurchase extends Page
                                 $totalAssets = $record->items->sum('quantity');
                                 return new HtmlString(
                                     '<div class="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 p-6 rounded-lg">' .
-                                    '<div class="flex items-center gap-3 mb-4">' .
-                                    '<svg class="w-10 h-10 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>' .
-                                    '<p class="font-bold text-green-900 dark:text-green-100 text-xl">Data Siap Disimpan</p>' .
-                                    '</div>' .
-                                    '<div class="space-y-3 text-sm text-green-800 dark:text-green-200 mb-4">' .
-                                    '<div class="flex items-start gap-2"><span class="text-green-600 dark:text-green-400">•</span><span>Dokumen: <strong>' . $record->document_number . '</strong></span></div>' .
-                                    '<div class="flex items-start gap-2"><span class="text-green-600 dark:text-green-400">•</span><span>Total jenis barang: <strong>' . $record->items->count() . '</strong></span></div>' .
-                                    '<div class="flex items-start gap-2"><span class="text-green-600 dark:text-green-400">•</span><span>Total unit aset yang akan dibuat: <strong>' . $totalAssets . ' aset</strong></span></div>' .
-                                    '<div class="flex items-start gap-2"><span class="text-green-600 dark:text-green-400">•</span><span>Setiap aset akan mendapat nomor unik dan tersimpan ke database</span></div>' .
-                                    '</div>' .
-                                    '<div class="mt-4 pt-4 border-t border-green-300 dark:border-green-700">' .
-                                    '<p class="text-xs text-green-700 dark:text-green-300 font-medium">⚠️ Klik tombol <strong>"Simpan Semua Pembelian"</strong> di bawah untuk memproses pembelian ini.</p>' .
-                                    '</div>' .
-                                    '</div>'
+                                        '<div class="flex items-center gap-3 mb-4">' .
+                                        '<svg class="w-10 h-10 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>' .
+                                        '<p class="font-bold text-green-900 dark:text-green-100 text-xl">Data Siap Disimpan</p>' .
+                                        '</div>' .
+                                        '<div class="space-y-3 text-sm text-green-800 dark:text-green-200 mb-4">' .
+                                        '<div class="flex items-start gap-2"><span class="text-green-600 dark:text-green-400">•</span><span>Dokumen: <strong>' . $record->document_number . '</strong></span></div>' .
+                                        '<div class="flex items-start gap-2"><span class="text-green-600 dark:text-green-400">•</span><span>Total jenis barang: <strong>' . $record->items->count() . '</strong></span></div>' .
+                                        '<div class="flex items-start gap-2"><span class="text-green-600 dark:text-green-400">•</span><span>Total unit aset yang akan dibuat: <strong>' . $totalAssets . ' aset</strong></span></div>' .
+                                        '<div class="flex items-start gap-2"><span class="text-green-600 dark:text-green-400">•</span><span>Setiap aset akan mendapat nomor unik dan tersimpan ke database</span></div>' .
+                                        '</div>' .
+                                        '<div class="mt-4 pt-4 border-t border-green-300 dark:border-green-700">' .
+                                        '<p class="text-xs text-green-700 dark:text-green-300 font-medium">⚠️ Klik tombol <strong>"Simpan Semua Pembelian"</strong> di bawah untuk memproses pembelian ini.</p>' .
+                                        '</div>' .
+                                        '</div>'
                                 );
                             })
                             ->columnSpanFull(),
@@ -425,8 +441,10 @@ class ProcessPurchase extends Page
             $statusId = $data['status_id'];
             $fundingSource = $data['funding_source'];
             $bookValueExpiry = $data['book_value_expiry'];
+            $vendor = $data['vendor'] ?? null;
+            $purchaseLocation = $data['purchase_location'] ?? null;
             $purchaseNotes = $data['purchase_notes'] ?? null;
-            
+
             $totalCreated = 0;
 
             // Generate sequential number SATU KALI untuk seluruh request ini
@@ -481,6 +499,8 @@ class ProcessPurchase extends Page
                         'book_value' => $bookValue,
                         'book_value_expiry' => $bookValueExpiry,
                         'funding_source' => $fundingSource,
+                        'vendor' => $vendor,
+                        'purchase_location' => $purchaseLocation,
                         'img' => $img,
                         'purchase_notes' => $purchaseNotes,
                         'item_index' => $i,

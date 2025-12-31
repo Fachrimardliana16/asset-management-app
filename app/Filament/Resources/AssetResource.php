@@ -693,6 +693,15 @@ class AssetResource extends Resource
                 'AssetTransactionStatus',
                 'latestMutation.AssetsMutationemployee',
                 'latestMutation.AssetsMutationlocation',
+                'latestMutation.AssetsMutationsubLocation',
+            ])
+            ->with([
+                'categoryAsset',
+                'conditionAsset',
+                'assetsStatus',
+                'AssetTransactionStatus',
+                'latestMutation.AssetsMutationemployee',
+                'latestMutation.AssetsMutationlocation',
             ]);
     }
 

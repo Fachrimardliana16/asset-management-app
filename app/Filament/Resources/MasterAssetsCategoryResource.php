@@ -18,7 +18,7 @@ use Filament\Forms\Components\Section;
 class MasterAssetsCategoryResource extends Resource
 {
     protected static ?string $model = MasterAssetsCategory::class;
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-tag';
     protected static ?string $navigationGroup = 'Master Aset';
     protected static ?string $navigationLabel = 'Kategori';
 

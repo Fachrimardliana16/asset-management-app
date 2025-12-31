@@ -18,7 +18,7 @@ class MasterAssetsSubLocationResource extends Resource
 {
     protected static ?string $model = MasterAssetsSubLocation::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-map';
     protected static ?string $navigationGroup = 'Master Aset';
     protected static ?string $navigationLabel = 'Sub Lokasi';
 

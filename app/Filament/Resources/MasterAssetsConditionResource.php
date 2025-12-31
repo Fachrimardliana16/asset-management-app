@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class MasterAssetsConditionResource extends Resource
 {
     protected static ?string $model = MasterAssetsCondition::class;
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-shield-check';
     protected static ?string $navigationGroup = 'Master Aset';
     protected static ?string $navigationLabel = 'Kondisi';
 

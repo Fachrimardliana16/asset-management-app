@@ -144,7 +144,12 @@ class EmployeeResource extends Resource
                             ->preload()
                             ->placeholder('Pilih user atau biarkan kosong')
                             ->helperText('Pilih user yang akan dihubungkan dengan pegawai ini. Jika tidak dipilih, pegawai tidak akan terhubung dengan akun user.')
-                            ->getOptionLabelFromRecordUsing(fn(User $record): string => "{$record->username} ({$record->name})")
+                            ->getOptionLabelFromRecordUsing(function (User $record): string {
+                                $name = $record->name ?? ($record->firstname . ' ' . $record->lastname);
+                                $email = $record->email ?? '-';
+
+                                return "{$name} | {$email}";
+                            })
                             ->default(fn($operation) => $operation === 'create' ? null : null)
                             ->nullable()
                             ->createOptionForm([
@@ -228,6 +233,17 @@ class EmployeeResource extends Resource
                                 return $user->id;
                             }),
                     ]),
+            ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with([
+                'department',
+                'subDepartment',
+                'position',
+                'user',
             ]);
     }
 

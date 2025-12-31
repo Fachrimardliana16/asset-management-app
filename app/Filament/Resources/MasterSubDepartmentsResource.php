@@ -18,7 +18,7 @@ class MasterSubDepartmentsResource extends Resource
 {
     protected static ?string $model = MasterSubDepartments::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
     protected static ?string $navigationGroup = 'Master';
     protected static ?string $navigationLabel = 'Sub Bagian';
 

@@ -30,6 +30,24 @@ class AssetRequestsResource extends Resource
     protected static ?string $pluralModelLabel = 'Permintaan Barang';
     protected static ?int $navigationSort = 1;
 
+    public static function getNavigationBadge(): ?string
+    {
+        static $count = null;
+        if ($count === null) {
+            $count = static::getModel()::where('purchase_status', 'pending')->count();
+        }
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        static $count = null;
+        if ($count === null) {
+            $count = static::getModel()::where('purchase_status', 'pending')->count();
+        }
+        return $count > 0 ? 'warning' : null;
+    }
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
@@ -371,6 +389,41 @@ class AssetRequestsResource extends Resource
                         'purchased' => 'Sudah Dibeli',
                         'cancelled' => 'Dibatalkan',
                     ]),
+                Tables\Filters\Filter::make('not_approved')
+                    ->label(function () {
+                        $count = \App\Models\AssetRequests::where(function ($q) {
+                            $q->where('kepala_sub_bagian', false)
+                                ->orWhereNull('kepala_sub_bagian')
+                                ->orWhere('kepala_bagian_umum', false)
+                                ->orWhereNull('kepala_bagian_umum')
+                                ->orWhere('kepala_bagian_keuangan', false)
+                                ->orWhereNull('kepala_bagian_keuangan')
+                                ->orWhere('direktur_umum', false)
+                                ->orWhereNull('direktur_umum')
+                                ->orWhere('direktur_utama', false)
+                                ->orWhereNull('direktur_utama')
+                                ->orWhere('status_request', false)
+                                ->orWhereNull('status_request');
+                        })->count();
+                        return "Belum Approve ({$count})";
+                    })
+                    ->query(function (Builder $query): Builder {
+                        return $query->where(function ($q) {
+                            $q->where('kepala_sub_bagian', false)
+                                ->orWhereNull('kepala_sub_bagian')
+                                ->orWhere('kepala_bagian_umum', false)
+                                ->orWhereNull('kepala_bagian_umum')
+                                ->orWhere('kepala_bagian_keuangan', false)
+                                ->orWhereNull('kepala_bagian_keuangan')
+                                ->orWhere('direktur_umum', false)
+                                ->orWhereNull('direktur_umum')
+                                ->orWhere('direktur_utama', false)
+                                ->orWhereNull('direktur_utama')
+                                ->orWhere('status_request', false)
+                                ->orWhereNull('status_request');
+                        });
+                    })
+                    ->indicator('Belum Approve'),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([

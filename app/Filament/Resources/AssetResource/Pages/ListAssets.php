@@ -4,6 +4,7 @@ namespace App\Filament\Resources\AssetResource\Pages;
 
 use App\Filament\Resources\AssetResource;
 use App\Filament\Resources\AssetResource\Widgets\AssetStatsWidget;
+use App\Models\Asset;
 use App\Models\MasterAssetsCondition;
 use App\Models\MasterAssetsLocation;
 use App\Models\MasterAssetsStatus;
@@ -176,6 +177,37 @@ class ListAssets extends ListRecords
                 ->label('Sub Lokasi')
                 ->options(MasterAssetsSubLocation::pluck('name', 'id'))
                 ->placeholder('Semua Sub Lokasi'),
+
+            Filter::make('rusak_perbaikan')
+                ->label(function () {
+                    $rusakConditionId = MasterAssetsCondition::where('name', 'Rusak')->first()?->id;
+                    $perluPerbaikanConditionId = MasterAssetsCondition::where('name', 'Perlu Perbaikan')->first()?->id;
+                    
+                    $count = Asset::where(function ($q) use ($rusakConditionId, $perluPerbaikanConditionId) {
+                        if ($rusakConditionId) {
+                            $q->orWhere('condition_id', $rusakConditionId);
+                        }
+                        if ($perluPerbaikanConditionId) {
+                            $q->orWhere('condition_id', $perluPerbaikanConditionId);
+                        }
+                    })->count();
+                    
+                    return "Rusak / Perbaikan ({$count})";
+                })
+                ->query(function (Builder $query): Builder {
+                    $rusakConditionId = MasterAssetsCondition::where('name', 'Rusak')->first()?->id;
+                    $perluPerbaikanConditionId = MasterAssetsCondition::where('name', 'Perlu Perbaikan')->first()?->id;
+                    
+                    return $query->where(function ($q) use ($rusakConditionId, $perluPerbaikanConditionId) {
+                        if ($rusakConditionId) {
+                            $q->orWhere('condition_id', $rusakConditionId);
+                        }
+                        if ($perluPerbaikanConditionId) {
+                            $q->orWhere('condition_id', $perluPerbaikanConditionId);
+                        }
+                    });
+                })
+                ->indicator('Rusak / Perbaikan'),
         ];
     }
 }
