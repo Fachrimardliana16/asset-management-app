@@ -27,9 +27,9 @@ class AssetTaxResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Pajak Aset';
 
-    protected static ?string $navigationGroup = 'Manajemen Aset';
+    protected static ?string $navigationGroup = 'Asset';
 
-    protected static ?int $navigationSort = 7;
+    protected static ?int $navigationSort = 8;
 
     public static function form(Form $form): Form
     {

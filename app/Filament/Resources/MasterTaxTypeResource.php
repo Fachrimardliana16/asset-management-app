@@ -24,9 +24,9 @@ class MasterTaxTypeResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Master Jenis Pajak';
 
-    protected static ?string $navigationGroup = 'Master Data';
+    protected static ?string $navigationGroup = 'Master Aset';
 
-    protected static ?int $navigationSort = 15;
+    protected static ?int $navigationSort = 8;
 
     public static function form(Form $form): Form
     {
