@@ -26,26 +26,26 @@ class AssetPurchasesTable extends BaseWidget
                     ->label('Nomor Dokumen')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('asset_name')
                     ->label('Nama Barang')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('vendor')
                     ->label('Vendor')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('category.name')
                     ->label('Kategori')
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('price')
                     ->label('Harga')
                     ->money('IDR')
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('purchase_date')
                     ->label('Tanggal Pembelian')
                     ->date('d M Y')

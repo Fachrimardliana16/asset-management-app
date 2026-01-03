@@ -27,25 +27,25 @@ class DamagedAssetsTable extends BaseWidget
                     ->label('Nomor Aset')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nama Aset')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('categoryAsset.name')
                     ->label('Kategori')
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('conditionAsset.name')
                     ->label('Kondisi')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'Rusak' => 'danger',
                         'Perbaikan' => 'warning',
                         default => 'gray',
                     }),
-                
+
                 Tables\Columns\TextColumn::make('purchase_date')
                     ->label('Tanggal Beli')
                     ->date('d M Y')

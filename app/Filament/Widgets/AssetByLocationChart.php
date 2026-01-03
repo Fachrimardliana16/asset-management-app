@@ -17,7 +17,7 @@ class AssetByLocationChart extends ChartWidget
     {
         // Get assets with their current location from latest mutation
         $data = DB::table('assets')
-            ->leftJoin('assets_mutation', function($join) {
+            ->leftJoin('assets_mutation', function ($join) {
                 $join->on('assets.id', '=', 'assets_mutation.assets_id')
                     ->whereRaw('assets_mutation.id = (SELECT id FROM assets_mutation WHERE assets_id = assets.id ORDER BY mutation_date DESC LIMIT 1)');
             })
@@ -28,7 +28,7 @@ class AssetByLocationChart extends ChartWidget
             ->toArray();
 
         // Remove null entries
-        $data = array_filter($data, function($key) {
+        $data = array_filter($data, function ($key) {
             return $key !== null && $key !== '';
         }, ARRAY_FILTER_USE_KEY);
 

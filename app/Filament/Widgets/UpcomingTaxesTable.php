@@ -31,31 +31,31 @@ class UpcomingTaxesTable extends BaseWidget
                     ->label('Nomor Aset')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('asset.name')
                     ->label('Nama Aset')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('taxType.name')
                     ->label('Jenis Pajak')
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('tax_amount')
                     ->label('Jumlah Pajak')
                     ->money('IDR')
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('due_date')
                     ->label('Jatuh Tempo')
                     ->date('d M Y')
                     ->sortable()
-                    ->color(fn ($record) => Carbon::parse($record->due_date)->isPast() ? 'danger' : 'warning'),
-                
+                    ->color(fn($record) => Carbon::parse($record->due_date)->isPast() ? 'danger' : 'warning'),
+
                 Tables\Columns\TextColumn::make('payment_status')
                     ->label('Status Pembayaran')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'paid' => 'success',
                         'unpaid' => 'danger',
                         'pending' => 'warning',

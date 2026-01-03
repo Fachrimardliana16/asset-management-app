@@ -26,31 +26,31 @@ class AssetRequestsTable extends BaseWidget
                     ->label('Nomor Dokumen')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('department.name')
                     ->label('Department')
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('requestedBy.name')
                     ->label('Pemohon')
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('total_items')
                     ->label('Jumlah Jenis')
                     ->numeric()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('total_quantity')
                     ->label('Total Unit')
                     ->numeric()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('status_request')
                     ->label('Status')
                     ->badge()
-                    ->formatStateUsing(fn ($state) => $state ? 'Disetujui' : 'Pending')
-                    ->color(fn ($state): string => $state ? 'success' : 'warning'),
-                
+                    ->formatStateUsing(fn($state) => $state ? 'Disetujui' : 'Pending')
+                    ->color(fn($state): string => $state ? 'success' : 'warning'),
+
                 Tables\Columns\TextColumn::make('date')
                     ->label('Tanggal Permintaan')
                     ->date('d M Y')

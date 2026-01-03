@@ -10,7 +10,7 @@ class AssetMaintenanceChart extends ChartWidget
 {
     protected static ?string $heading = 'Total Pemeliharaan Barang';
     protected static ?int $sort = 4;
-    
+
     public ?string $filter = 'month';
 
     protected function getFilters(): ?array
@@ -26,7 +26,7 @@ class AssetMaintenanceChart extends ChartWidget
     protected function getData(): array
     {
         $filter = $this->filter;
-        
+
         if ($filter === 'day') {
             return $this->getDataByDay();
         } elseif ($filter === 'week') {
@@ -42,14 +42,14 @@ class AssetMaintenanceChart extends ChartWidget
     {
         $data = [];
         $labels = [];
-        
+
         for ($i = 23; $i >= 0; $i--) {
             $hour = Carbon::now()->subHours($i);
             $labels[] = $hour->format('H:00');
-            
+
             $startHour = Carbon::today()->addHours($hour->hour);
             $endHour = $startHour->copy()->addHour();
-            
+
             $data[] = AssetMaintenance::whereBetween('created_at', [$startHour, $endHour])->count();
         }
 
@@ -70,7 +70,7 @@ class AssetMaintenanceChart extends ChartWidget
     {
         $data = [];
         $labels = [];
-        
+
         for ($i = 6; $i >= 0; $i--) {
             $day = Carbon::now()->subDays($i);
             $labels[] = $day->format('D');
@@ -95,7 +95,7 @@ class AssetMaintenanceChart extends ChartWidget
         $data = [];
         $labels = [];
         $daysInMonth = Carbon::now()->daysInMonth;
-        
+
         for ($i = 1; $i <= $daysInMonth; $i++) {
             $labels[] = (string)$i;
             $date = Carbon::now()->startOfMonth()->addDays($i - 1);
@@ -119,7 +119,7 @@ class AssetMaintenanceChart extends ChartWidget
     {
         $data = [];
         $labels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-        
+
         for ($i = 1; $i <= 12; $i++) {
             $data[] = AssetMaintenance::whereYear('created_at', Carbon::now()->year)
                 ->whereMonth('created_at', $i)

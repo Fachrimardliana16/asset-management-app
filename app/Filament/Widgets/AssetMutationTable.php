@@ -26,29 +26,29 @@ class AssetMutationTable extends BaseWidget
                     ->label('Nomor Mutasi')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('assets_number')
                     ->label('Nomor Aset')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nama Aset')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('AssetsMutationemployee.name')
                     ->label('Pegawai')
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('AssetsMutationlocation.name')
                     ->label('Lokasi')
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('AssetsMutationsubLocation.name')
                     ->label('Sub Lokasi')
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('mutation_date')
                     ->label('Tanggal Mutasi')
                     ->date('d M Y')

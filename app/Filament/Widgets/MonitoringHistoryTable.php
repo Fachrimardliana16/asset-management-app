@@ -26,27 +26,27 @@ class MonitoringHistoryTable extends BaseWidget
                     ->label('Nomor Aset')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nama Aset')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Petugas')
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('newCondition.name')
                     ->label('Kondisi')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'Baik' => 'success',
                         'Rusak' => 'danger',
                         'Perbaikan' => 'warning',
                         'Baru' => 'info',
                         default => 'gray',
                     }),
-                
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Tanggal Monitoring')
                     ->dateTime('d M Y H:i')
