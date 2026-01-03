@@ -57,12 +57,28 @@ class AssetByMutationTypeChart extends ChartWidget
     protected function getOptions(): array
     {
         return [
-            'maintainAspectRatio' => true,
-            'aspectRatio' => 2,
+            'maintainAspectRatio' => false,
+            'responsive' => true,
+            'cutout' => '70%',
+            'scales' => [
+                'x' => [
+                    'display' => false,
+                ],
+                'y' => [
+                    'display' => false,
+                ],
+            ],
             'plugins' => [
                 'legend' => [
                     'display' => true,
                     'position' => 'bottom',
+                    'labels' => [
+                        'padding' => 15,
+                        'usePointStyle' => true,
+                        'font' => [
+                            'size' => 12,
+                        ],
+                    ],
                 ],
             ],
         ];

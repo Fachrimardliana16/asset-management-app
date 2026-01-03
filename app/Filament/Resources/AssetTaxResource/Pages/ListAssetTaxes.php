@@ -17,17 +17,21 @@ class ListAssetTaxes extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            // Hapus CreateAction - resource ini hanya untuk histori
+            // Actions\CreateAction::make(),
+            
             Actions\ExportAction::make()
                 ->exporter(AssetTaxExporter::class)
-                ->label('Export')
+                ->label('Export Laporan Pajak')
                 ->icon('heroicon-o-arrow-down-tray')
                 ->color('success'),
-            Actions\ImportAction::make()
-                ->importer(AssetTaxImporter::class)
-                ->label('Import')
-                ->icon('heroicon-o-arrow-up-tray')
-                ->color('info'),
+                
+            // Hapus ImportAction - input pajak dilakukan dari AssetResource
+            // Actions\ImportAction::make()
+            //     ->importer(AssetTaxImporter::class)
+            //     ->label('Import')
+            //     ->icon('heroicon-o-arrow-up-tray')
+            //     ->color('info'),
         ];
     }
 

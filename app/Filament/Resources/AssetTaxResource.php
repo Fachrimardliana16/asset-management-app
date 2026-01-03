@@ -125,19 +125,7 @@ class AssetTaxResource extends Resource
                                 'cancelled' => 'Dibatalkan',
                             ])
                             ->default('pending')
-                            ->required()
-                            ->disabled(fn ($record) => $record && $record->approval_status === 'approved'),
-                        
-                        Forms\Components\Select::make('approval_status')
-                            ->label('Status Approval')
-                            ->options([
-                                'pending' => 'Menunggu Approval',
-                                'approved' => 'Disetujui',
-                                'rejected' => 'Ditolak',
-                            ])
-                            ->default('pending')
-                            ->disabled()
-                            ->helperText('Status approval dari atasan'),
+                            ->required(),
                     ])
                     ->columns(2),
 
@@ -190,31 +178,9 @@ class AssetTaxResource extends Resource
                             ->label('Catatan')
                             ->rows(3)
                             ->columnSpanFull(),
-                        
-                        Forms\Components\Textarea::make('rejection_reason')
-                            ->label('Alasan Penolakan')
-                            ->rows(3)
-                            ->visible(fn ($record) => $record && $record->approval_status === 'rejected')
-                            ->disabled()
-                            ->columnSpanFull(),
                     ]),
 
-                Forms\Components\Section::make('Informasi Approval')
-                    ->schema([
-                        Forms\Components\Placeholder::make('paid_by_info')
-                            ->label('Dibayar Oleh')
-                            ->content(fn ($record) => $record?->paidByUser?->name ?? '-'),
-                        
-                        Forms\Components\Placeholder::make('approved_by_info')
-                            ->label('Disetujui Oleh')
-                            ->content(fn ($record) => $record?->approvedByUser?->name ?? '-'),
-                        
-                        Forms\Components\Placeholder::make('approved_at_info')
-                            ->label('Tanggal Approval')
-                            ->content(fn ($record) => $record?->approved_at?->format('d M Y H:i') ?? '-'),
-                    ])
-                    ->columns(3)
-                    ->visible(fn ($record) => $record && $record->approval_status !== 'pending'),
+
             ]);
     }
 
@@ -292,20 +258,7 @@ class AssetTaxResource extends Resource
                         default => $state,
                     }),
                 
-                Tables\Columns\BadgeColumn::make('approval_status')
-                    ->label('Approval')
-                    ->colors([
-                        'success' => 'approved',
-                        'warning' => 'pending',
-                        'danger' => 'rejected',
-                    ])
-                    ->formatStateUsing(fn ($state) => match($state) {
-                        'approved' => 'Disetujui',
-                        'pending' => 'Pending',
-                        'rejected' => 'Ditolak',
-                        default => $state,
-                    }),
-                
+
                 Tables\Columns\TextColumn::make('overdue_days')
                     ->label('Hari Terlambat')
                     ->suffix(' hari')
@@ -353,15 +306,7 @@ class AssetTaxResource extends Resource
                     ])
                     ->multiple(),
                 
-                Tables\Filters\SelectFilter::make('approval_status')
-                    ->label('Status Approval')
-                    ->options([
-                        'pending' => 'Menunggu Approval',
-                        'approved' => 'Disetujui',
-                        'rejected' => 'Ditolak',
-                    ])
-                    ->multiple(),
-                
+
                 Tables\Filters\Filter::make('overdue')
                     ->label('Terlambat')
                     ->query(fn (Builder $query) => $query->overdue()),
@@ -372,9 +317,14 @@ class AssetTaxResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
-                    Tables\Actions\ViewAction::make(),
-                    Tables\Actions\EditAction::make(),
+                    // Hanya action View - resource ini untuk histori saja
+                    Tables\Actions\ViewAction::make()
+                        ->label('Lihat Detail'),
                     
+                    // Hapus EditAction - tidak boleh edit histori
+                    // Tables\Actions\EditAction::make(),
+                    
+                    // Action Bayar tetap ada untuk update status pembayaran
                     Tables\Actions\Action::make('pay')
                         ->label('Bayar')
                         ->icon('heroicon-o-banknotes')
@@ -422,95 +372,21 @@ class AssetTaxResource extends Resource
                                 ->send();
                         }),
                     
-                    Tables\Actions\Action::make('approve')
-                        ->label('Setujui')
-                        ->icon('heroicon-o-check-circle')
-                        ->color('success')
-                        ->requiresConfirmation()
-                        ->visible(fn ($record) => 
-                            $record && $record->approval_status === 'pending' && 
-                            Auth::user()->can('approve', $record)
-                        )
-                        ->action(function ($record) {
-                            $record->update([
-                                'approval_status' => 'approved',
-                                'approved_by' => Auth::id(),
-                                'approved_at' => now(),
-                            ]);
-                            
-                            Notification::make()
-                                ->title('Pajak Disetujui')
-                                ->success()
-                                ->send();
-                        }),
+                    // Approval dihapus - auto approve
+                    // Tables\Actions\Action::make('reject')
                     
-                    Tables\Actions\Action::make('reject')
-                        ->label('Tolak')
-                        ->icon('heroicon-o-x-circle')
-                        ->color('danger')
-                        ->form([
-                            Forms\Components\Textarea::make('rejection_reason')
-                                ->label('Alasan Penolakan')
-                                ->required()
-                                ->rows(3),
-                        ])
-                        ->visible(fn ($record) => 
-                            $record && $record->approval_status === 'pending' && 
-                            Auth::user()->can('reject', $record)
-                        )
-                        ->action(function ($record, array $data) {
-                            $record->update([
-                                'approval_status' => 'rejected',
-                                'rejection_reason' => $data['rejection_reason'],
-                                'approved_by' => Auth::id(),
-                                'approved_at' => now(),
-                            ]);
-                            
-                            Notification::make()
-                                ->title('Pajak Ditolak')
-                                ->danger()
-                                ->send();
-                        }),
+                    // Hapus action Update Penalty - sudah otomatis
+                    // Tables\Actions\Action::make('update_penalty')
                     
-                    Tables\Actions\Action::make('update_penalty')
-                        ->label('Update Denda')
-                        ->icon('heroicon-o-calculator')
-                        ->color('warning')
-                        ->requiresConfirmation()
-                        ->action(function ($record) {
-                            $record->updatePenalty();
-                            
-                            Notification::make()
-                                ->title('Denda Diperbarui')
-                                ->body("Denda: Rp " . number_format($record->penalty_amount, 0, ',', '.'))
-                                ->success()
-                                ->send();
-                        }),
-                    
-                    Tables\Actions\DeleteAction::make(),
+                    // Hapus DeleteAction - resource ini hanya read-only histori
+                    // Tables\Actions\DeleteAction::make(),
                 ]),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    
-                    Tables\Actions\BulkAction::make('update_penalties')
-                        ->label('Update Denda Massal')
-                        ->icon('heroicon-o-calculator')
-                        ->color('warning')
-                        ->requiresConfirmation()
-                        ->action(function ($records) {
-                            foreach ($records as $record) {
-                                $record->updatePenalty();
-                            }
-                            
-                            Notification::make()
-                                ->title('Denda Diperbarui')
-                                ->body(count($records) . ' pajak telah diperbarui dendanya')
-                                ->success()
-                                ->send();
-                        }),
-                ]),
+                // Hapus semua bulk actions - resource ini read-only
+                // Tables\Actions\BulkActionGroup::make([
+                //     Tables\Actions\DeleteBulkAction::make(),
+                // ]),
             ])
             ->defaultSort('due_date', 'desc');
     }
@@ -526,19 +402,20 @@ class AssetTaxResource extends Resource
     {
         return [
             'index' => Pages\ListAssetTaxes::route('/'),
-            'create' => Pages\CreateAssetTax::route('/create'),
-            'edit' => Pages\EditAssetTax::route('/{record}/edit'),
+            // Hapus Create dan Edit - resource ini read-only
+            // 'create' => Pages\CreateAssetTax::route('/create'),
+            // 'edit' => Pages\EditAssetTax::route('/{record}/edit'),
             'view' => Pages\ViewAssetTax::route('/{record}'),
         ];
     }
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::pendingApproval()->count();
+        return static::getModel()::where('payment_status', 'overdue')->count();
     }
 
-    public static function getNavigationBadgeColor(): ?string
+    public static function getNavigationBadgeColor(): string|array|null
     {
-        return static::getModel()::pendingApproval()->count() > 0 ? 'warning' : 'primary';
+        return static::getModel()::where('payment_status', 'overdue')->count() > 0 ? 'danger' : 'primary';
     }
 }

@@ -8,6 +8,8 @@ use App\Models\Asset;
 use App\Models\AssetDisposal;
 use App\Models\AssetMaintenance;
 use App\Models\AssetMutation;
+use App\Models\AssetTax;
+use App\Models\MasterTaxType;
 use App\Models\Employee;
 use App\Models\MasterAssetsCondition;
 use App\Models\MasterAssetsLocation;
@@ -632,7 +634,143 @@ class AssetResource extends Resource
                         ->modalIcon('heroicon-o-exclamation-triangle')
                         ->modalIconColor('danger'),
 
-                    // 7. Hapus Record
+                    // 7. UPDATE PAJAK ASET
+                    Tables\Actions\Action::make('update_pajak')
+                        ->label('Update Pajak')
+                        ->icon('heroicon-o-banknotes')
+                        ->color('success')
+                        ->visible(function (Asset $record) {
+                            // Hanya tampilkan jika aset memiliki jenis pajak berdasarkan kategori
+                            return MasterTaxType::where('asset_category_id', $record->category_id)
+                                ->where('is_active', true)
+                                ->exists();
+                        })
+                        ->modalHeading(fn(Asset $record) => 'Update Pajak: ' . $record->assets_number)
+                        ->modalDescription('Update pembayaran pajak untuk aset ini')
+                        ->modalSubmitActionLabel('Simpan Pembayaran Pajak')
+                        ->modalWidth('2xl')
+                        ->form(function (Asset $record) {
+                            // Ambil jenis pajak yang tersedia untuk kategori aset ini
+                            $availableTaxTypes = MasterTaxType::where('asset_category_id', $record->category_id)
+                                ->where('is_active', true)
+                                ->get();
+
+                            // Ambil pajak terakhir yang dibayar
+                            $latestTax = $record->taxes()
+                                ->latest('payment_date')
+                                ->latest('created_at')
+                                ->first();
+
+                            return [
+                                Forms\Components\Section::make('Info Pajak Sebelumnya')
+                                    ->schema([
+                                        Forms\Components\Placeholder::make('pajak_lama_info')
+                                            ->label('Pajak Terakhir')
+                                            ->content(function () use ($latestTax) {
+                                                if (!$latestTax) {
+                                                    return 'Belum ada pembayaran pajak';
+                                                }
+                                                
+                                                return sprintf(
+                                                    "%s - Tahun %s\nDibayar: %s\nNilai: Rp %s",
+                                                    $latestTax->taxType->name ?? '-',
+                                                    $latestTax->tax_year,
+                                                    $latestTax->payment_date ? $latestTax->payment_date->format('d M Y') : 'Belum dibayar',
+                                                    number_format($latestTax->tax_amount, 0, ',', '.')
+                                                );
+                                            })
+                                            ->visible(fn() => $latestTax !== null),
+                                    ])
+                                    ->columns(1)
+                                    ->visible(fn() => $latestTax !== null),
+
+                                Forms\Components\Section::make('Data Pembayaran Pajak Baru')
+                                    ->schema([
+                                        Forms\Components\Select::make('tax_type_id')
+                                            ->label('Jenis Pajak')
+                                            ->options($availableTaxTypes->pluck('name', 'id'))
+                                            ->required()
+                                            ->reactive()
+                                            ->helperText('Pilih jenis pajak yang akan dibayar'),
+
+                                        Forms\Components\TextInput::make('tax_year')
+                                            ->label('Tahun Pajak')
+                                            ->required()
+                                            ->numeric()
+                                            ->default(date('Y'))
+                                            ->minValue(2000)
+                                            ->maxValue(2100)
+                                            ->helperText('Tahun periode pajak'),
+
+                                        Forms\Components\TextInput::make('tax_amount')
+                                            ->label('Nilai Pajak')
+                                            ->required()
+                                            ->numeric()
+                                            ->prefix('Rp')
+                                            ->placeholder('0')
+                                            ->helperText('Nilai pajak yang harus dibayar'),
+
+                                        Forms\Components\DatePicker::make('due_date')
+                                            ->label('Tanggal Jatuh Tempo')
+                                            ->required()
+                                            ->default(now()->addMonth())
+                                            ->helperText('Batas waktu pembayaran pajak'),
+
+                                        Forms\Components\DatePicker::make('payment_date')
+                                            ->label('Tanggal Pembayaran')
+                                            ->default(now())
+                                            ->helperText('Tanggal aktual pembayaran (opsional, isi jika sudah dibayar)'),
+
+                                        Forms\Components\Select::make('payment_status')
+                                            ->label('Status Pembayaran')
+                                            ->options([
+                                                'pending' => 'Pending',
+                                                'paid' => 'Lunas',
+                                                'overdue' => 'Terlambat',
+                                                'cancelled' => 'Dibatalkan',
+                                            ])
+                                            ->default('pending')
+                                            ->required()
+                                            ->native(false),
+
+                                        Forms\Components\Textarea::make('notes')
+                                            ->label('Catatan')
+                                            ->rows(3)
+                                            ->placeholder('Catatan tambahan tentang pembayaran pajak ini (opsional)'),
+                                    ])
+                                    ->columns(2),
+                            ];
+                        })
+                        ->action(function (Asset $record, array $data) {
+                            $newTax = AssetTax::create([
+                                'asset_id' => $record->id,
+                                'tax_type_id' => $data['tax_type_id'],
+                                'tax_year' => $data['tax_year'],
+                                'tax_amount' => $data['tax_amount'],
+                                'due_date' => $data['due_date'],
+                                'payment_date' => $data['payment_date'] ?? null,
+                                'payment_status' => $data['payment_status'],
+                                'approval_status' => 'approved', // Auto-approve
+                                'approved_by' => auth()->id(),
+                                'approved_at' => now(),
+                                'penalty_amount' => 0,
+                                'notes' => $data['notes'] ?? null,
+                                'paid_by' => auth()->id(),
+                            ]);
+
+                            Notification::make()
+                                ->success()
+                                ->title('Pajak Berhasil Ditambahkan!')
+                                ->body(sprintf(
+                                    'Pembayaran pajak tahun %s berhasil dicatat.',
+                                    $data['tax_year']
+                                ))
+                                ->send();
+                        })
+                        ->modalIcon('heroicon-o-banknotes')
+                        ->modalIconColor('success'),
+
+                    // 8. Hapus Record
                     Tables\Actions\DeleteAction::make()
                         ->requiresConfirmation(),
 
