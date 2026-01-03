@@ -10,7 +10,7 @@ class TaxTypeSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     * 
+     *
      * Seeder ini berisi jenis-jenis pajak aset sesuai peraturan perpajakan di Indonesia
      */
     public function run(): void

@@ -19,13 +19,13 @@ class ListAssetTaxes extends ListRecords
         return [
             // Hapus CreateAction - resource ini hanya untuk histori
             // Actions\CreateAction::make(),
-            
+
             Actions\ExportAction::make()
                 ->exporter(AssetTaxExporter::class)
                 ->label('Export Laporan Pajak')
                 ->icon('heroicon-o-arrow-down-tray')
                 ->color('success'),
-                
+
             // Hapus ImportAction - input pajak dilakukan dari AssetResource
             // Actions\ImportAction::make()
             //     ->importer(AssetTaxImporter::class)
@@ -39,31 +39,31 @@ class ListAssetTaxes extends ListRecords
     {
         return [
             'all' => Tab::make('Semua')
-                ->badge(fn () => $this->getModel()::count()),
-            
+                ->badge(fn() => $this->getModel()::count()),
+
             'pending_approval' => Tab::make('Menunggu Approval')
-                ->modifyQueryUsing(fn (Builder $query) => $query->pendingApproval())
-                ->badge(fn () => $this->getModel()::pendingApproval()->count())
+                ->modifyQueryUsing(fn(Builder $query) => $query->pendingApproval())
+                ->badge(fn() => $this->getModel()::pendingApproval()->count())
                 ->badgeColor('warning'),
-            
+
             'unpaid' => Tab::make('Belum Dibayar')
-                ->modifyQueryUsing(fn (Builder $query) => $query->unpaid())
-                ->badge(fn () => $this->getModel()::unpaid()->count())
+                ->modifyQueryUsing(fn(Builder $query) => $query->unpaid())
+                ->badge(fn() => $this->getModel()::unpaid()->count())
                 ->badgeColor('danger'),
-            
+
             'overdue' => Tab::make('Terlambat')
-                ->modifyQueryUsing(fn (Builder $query) => $query->overdue())
-                ->badge(fn () => $this->getModel()::overdue()->count())
+                ->modifyQueryUsing(fn(Builder $query) => $query->overdue())
+                ->badge(fn() => $this->getModel()::overdue()->count())
                 ->badgeColor('danger'),
-            
+
             'upcoming' => Tab::make('Akan Jatuh Tempo')
-                ->modifyQueryUsing(fn (Builder $query) => $query->upcoming(30))
-                ->badge(fn () => $this->getModel()::upcoming(30)->count())
+                ->modifyQueryUsing(fn(Builder $query) => $query->upcoming(30))
+                ->badge(fn() => $this->getModel()::upcoming(30)->count())
                 ->badgeColor('warning'),
-            
+
             'paid' => Tab::make('Sudah Dibayar')
-                ->modifyQueryUsing(fn (Builder $query) => $query->paid())
-                ->badge(fn () => $this->getModel()::paid()->count())
+                ->modifyQueryUsing(fn(Builder $query) => $query->paid())
+                ->badge(fn() => $this->getModel()::paid()->count())
                 ->badgeColor('success'),
         ];
     }

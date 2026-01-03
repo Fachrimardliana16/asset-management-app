@@ -53,7 +53,7 @@ class AssetTaxResource extends Resource
                                 }
                             })
                             ->helperText('Pilih aset yang akan dibayar pajaknya'),
-                        
+
                         Forms\Components\Select::make('tax_type_id')
                             ->label('Jenis Pajak')
                             ->options(function (Forms\Get $get) {
@@ -80,9 +80,9 @@ class AssetTaxResource extends Resource
                                 }
                             })
                             ->helperText('Jenis pajak sesuai dengan kategori aset'),
-                        
+
                         Forms\Components\Hidden::make('filtered_category'),
-                        
+
                         Forms\Components\TextInput::make('tax_year')
                             ->label('Tahun Pajak')
                             ->numeric()
@@ -91,7 +91,7 @@ class AssetTaxResource extends Resource
                             ->maxValue(2100)
                             ->required()
                             ->live(),
-                        
+
                         Forms\Components\TextInput::make('tax_amount')
                             ->label('Nilai Pajak')
                             ->numeric()
@@ -110,12 +110,12 @@ class AssetTaxResource extends Resource
                             ->required()
                             ->minDate(now())
                             ->helperText('Batas waktu pembayaran pajak'),
-                        
+
                         Forms\Components\DatePicker::make('payment_date')
                             ->label('Tanggal Pembayaran')
                             ->maxDate(now())
                             ->helperText('Tanggal saat pajak dibayar'),
-                        
+
                         Forms\Components\Select::make('payment_status')
                             ->label('Status Pembayaran')
                             ->options([
@@ -135,11 +135,11 @@ class AssetTaxResource extends Resource
                             ->label('Kalkulasi Denda')
                             ->content(function ($record) {
                                 if (!$record) return 'Simpan data untuk melihat kalkulasi';
-                                
+
                                 $penalty = $record->calculatePenalty();
                                 return $penalty['calculation'];
                             }),
-                        
+
                         Forms\Components\TextInput::make('penalty_amount')
                             ->label('Jumlah Denda')
                             ->numeric()
@@ -148,7 +148,7 @@ class AssetTaxResource extends Resource
                             ->disabled()
                             ->dehydrated()
                             ->helperText('Denda akan dihitung otomatis'),
-                        
+
                         Forms\Components\TextInput::make('overdue_days')
                             ->label('Hari Keterlambatan')
                             ->numeric()
@@ -158,7 +158,7 @@ class AssetTaxResource extends Resource
                             ->helperText('Jumlah hari terlambat dari jatuh tempo'),
                     ])
                     ->columns(2)
-                    ->visible(fn ($record) => $record !== null),
+                    ->visible(fn($record) => $record !== null),
 
                 Forms\Components\Section::make('Bukti Pembayaran')
                     ->schema([
@@ -193,55 +193,55 @@ class AssetTaxResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->limit(30),
-                
+
                 Tables\Columns\TextColumn::make('asset.asset_code')
                     ->label('Kode Aset')
                     ->searchable()
                     ->toggleable(),
-                
+
                 Tables\Columns\TextColumn::make('taxType.name')
                     ->label('Jenis Pajak')
                     ->searchable()
                     ->sortable()
                     ->badge()
                     ->color('info'),
-                
+
                 Tables\Columns\TextColumn::make('tax_year')
                     ->label('Tahun')
                     ->sortable()
                     ->alignCenter(),
-                
+
                 Tables\Columns\TextColumn::make('tax_amount')
                     ->label('Nilai Pajak')
                     ->money('IDR')
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('penalty_amount')
                     ->label('Denda')
                     ->money('IDR')
                     ->sortable()
                     ->color('danger')
                     ->toggleable(),
-                
+
                 Tables\Columns\TextColumn::make('total_amount')
                     ->label('Total')
                     ->money('IDR')
                     ->sortable()
                     ->weight('bold'),
-                
+
                 Tables\Columns\TextColumn::make('due_date')
                     ->label('Jatuh Tempo')
                     ->date('d M Y')
                     ->sortable()
-                    ->color(fn ($record) => ($record && $record->isOverdue()) ? 'danger' : 'success'),
-                
+                    ->color(fn($record) => ($record && $record->isOverdue()) ? 'danger' : 'success'),
+
                 Tables\Columns\TextColumn::make('payment_date')
                     ->label('Tgl Bayar')
                     ->date('d M Y')
                     ->sortable()
                     ->toggleable()
                     ->placeholder('-'),
-                
+
                 Tables\Columns\BadgeColumn::make('payment_status')
                     ->label('Status Bayar')
                     ->colors([
@@ -250,14 +250,14 @@ class AssetTaxResource extends Resource
                         'danger' => 'overdue',
                         'secondary' => 'cancelled',
                     ])
-                    ->formatStateUsing(fn ($state) => match($state) {
+                    ->formatStateUsing(fn($state) => match ($state) {
                         'paid' => 'Lunas',
                         'pending' => 'Pending',
                         'overdue' => 'Terlambat',
                         'cancelled' => 'Batal',
                         default => $state,
                     }),
-                
+
 
                 Tables\Columns\TextColumn::make('overdue_days')
                     ->label('Hari Terlambat')
@@ -265,8 +265,8 @@ class AssetTaxResource extends Resource
                     ->alignCenter()
                     ->toggleable()
                     ->color('danger')
-                    ->visible(fn ($record) => $record && $record->overdue_days > 0),
-                
+                    ->visible(fn($record) => $record && $record->overdue_days > 0),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Dibuat')
                     ->dateTime('d M Y H:i')
@@ -279,13 +279,13 @@ class AssetTaxResource extends Resource
                     ->relationship('asset', 'name')
                     ->searchable()
                     ->preload(),
-                
+
                 Tables\Filters\SelectFilter::make('tax_type_id')
                     ->label('Jenis Pajak')
                     ->relationship('taxType', 'name')
                     ->multiple()
                     ->preload(),
-                
+
                 Tables\Filters\SelectFilter::make('tax_year')
                     ->label('Tahun')
                     ->options(function () {
@@ -295,7 +295,7 @@ class AssetTaxResource extends Resource
                         }
                         return $years;
                     }),
-                
+
                 Tables\Filters\SelectFilter::make('payment_status')
                     ->label('Status Pembayaran')
                     ->options([
@@ -305,25 +305,25 @@ class AssetTaxResource extends Resource
                         'cancelled' => 'Dibatalkan',
                     ])
                     ->multiple(),
-                
+
 
                 Tables\Filters\Filter::make('overdue')
                     ->label('Terlambat')
-                    ->query(fn (Builder $query) => $query->overdue()),
-                
+                    ->query(fn(Builder $query) => $query->overdue()),
+
                 Tables\Filters\Filter::make('upcoming')
                     ->label('Akan Jatuh Tempo (30 hari)')
-                    ->query(fn (Builder $query) => $query->upcoming(30)),
+                    ->query(fn(Builder $query) => $query->upcoming(30)),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     // Hanya action View - resource ini untuk histori saja
                     Tables\Actions\ViewAction::make()
                         ->label('Lihat Detail'),
-                    
+
                     // Hapus EditAction - tidak boleh edit histori
                     // Tables\Actions\EditAction::make(),
-                    
+
                     // Action Bayar tetap ada untuk update status pembayaran
                     Tables\Actions\Action::make('pay')
                         ->label('Bayar')
@@ -347,7 +347,8 @@ class AssetTaxResource extends Resource
                                 ->rows(3)
                                 ->placeholder('Tambahkan catatan jika diperlukan...'),
                         ])
-                        ->visible(fn ($record) => 
+                        ->visible(
+                            fn($record) =>
                             $record && $record->payment_status !== 'paid'
                         )
                         ->action(function ($record, array $data) {
@@ -355,29 +356,29 @@ class AssetTaxResource extends Resource
                                 'payment_status' => 'paid',
                                 'payment_date' => $data['payment_date'],
                                 'paid_by' => Auth::id(),
-                                'notes' => ($record->notes ? $record->notes . "\n\n" : '') . 
-                                          "Pembayaran: " . ($data['payment_notes'] ?? ''),
+                                'notes' => ($record->notes ? $record->notes . "\n\n" : '') .
+                                    "Pembayaran: " . ($data['payment_notes'] ?? ''),
                             ]);
-                            
+
                             // Save payment proof if uploaded
                             if (isset($data['payment_proof'])) {
                                 $record->addMedia(storage_path('app/public/' . $data['payment_proof']))
                                     ->toMediaCollection('payment_proofs');
                             }
-                            
+
                             Notification::make()
                                 ->title('Pembayaran Berhasil')
                                 ->body('Pajak telah ditandai sebagai lunas')
                                 ->success()
                                 ->send();
                         }),
-                    
+
                     // Approval dihapus - auto approve
                     // Tables\Actions\Action::make('reject')
-                    
+
                     // Hapus action Update Penalty - sudah otomatis
                     // Tables\Actions\Action::make('update_penalty')
-                    
+
                     // Hapus DeleteAction - resource ini hanya read-only histori
                     // Tables\Actions\DeleteAction::make(),
                 ]),

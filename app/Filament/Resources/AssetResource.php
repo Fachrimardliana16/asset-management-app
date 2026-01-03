@@ -670,7 +670,7 @@ class AssetResource extends Resource
                                                 if (!$latestTax) {
                                                     return 'Belum ada pembayaran pajak';
                                                 }
-                                                
+
                                                 return sprintf(
                                                     "%s - Tahun %s\nDibayar: %s\nNilai: Rp %s",
                                                     $latestTax->taxType->name ?? '-',
