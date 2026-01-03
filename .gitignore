@@ -18,3 +18,11 @@ yarn-error.log
 /.idea
 /.vscode
 .env.public
+
+# Laravel Debugbar
+/storage/debugbar/
+
+# Dokumentasi AI/Changelog
+/*.md
+!README.md
+!LICENSE.md
