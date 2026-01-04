@@ -12,9 +12,12 @@ class AssetByCategoryChart extends ChartWidget
     protected static ?int $sort = 7;
     protected int | string | array $columnSpan = 1;
     protected static ?string $maxHeight = '250px';
+    protected static bool $isLazy = true;
+    protected static ?string $pollingInterval = null;
 
     protected function getData(): array
     {
+        return cache()->remember('chart.asset.by.category', 600, function() {
         try {
             $data = Asset::join('master_assets_category', 'assets.category_id', '=', 'master_assets_category.id')
                 ->select('master_assets_category.name', DB::raw('count(assets.id) as total'))
@@ -44,7 +47,8 @@ class AssetByCategoryChart extends ChartWidget
                 ],
             ],
             'labels' => array_keys($data),
-        ];
+            ];
+        });
     }
 
     protected function getType(): string

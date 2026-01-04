@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class AssetMutation extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, SoftDeletes;
 
     protected $table = 'assets_mutation';
 
@@ -26,6 +27,9 @@ class AssetMutation extends Model
         'scan_doc',
         'desc',
         'users_id',
+        'created_by',
+        'updated_by',
+        'deleted_by',
     ];
 
     protected $casts = [

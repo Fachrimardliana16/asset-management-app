@@ -9,8 +9,8 @@ use Illuminate\Support\Carbon;
 class AssetPurchasesChart extends ChartWidget
 {
     protected static ?string $heading = 'Total Pembelian Barang';
-    protected static ?int $sort = 3;
-
+    protected static ?int $sort = 3;    protected static bool $isLazy = true;
+    protected static ?string $pollingInterval = null;
     public ?string $filter = 'month';
 
     protected function getFilters(): ?array

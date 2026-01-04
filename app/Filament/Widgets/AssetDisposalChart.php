@@ -10,6 +10,8 @@ class AssetDisposalChart extends ChartWidget
 {
     protected static ?string $heading = 'Total Penghapusan Barang';
     protected static ?int $sort = 5;
+    protected static bool $isLazy = true;
+    protected static ?string $pollingInterval = null;
 
     public ?string $filter = 'month';
 

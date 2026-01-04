@@ -12,9 +12,12 @@ class AssetByLocationChart extends ChartWidget
     protected static ?int $sort = 8;
     protected int | string | array $columnSpan = 1;
     protected static ?string $maxHeight = '250px';
+    protected static bool $isLazy = true;
+    protected static ?string $pollingInterval = null;
 
     protected function getData(): array
     {
+        return cache()->remember('chart.asset.by.location', 600, function() {
         // Get assets with their current location from latest mutation
         $data = DB::table('assets')
             ->leftJoin('assets_mutation', function ($join) {
@@ -51,7 +54,8 @@ class AssetByLocationChart extends ChartWidget
                 ],
             ],
             'labels' => array_keys($data),
-        ];
+            ];
+        });
     }
 
     protected function getType(): string

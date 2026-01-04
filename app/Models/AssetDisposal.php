@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class AssetDisposal extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, SoftDeletes;
 
     protected $table = 'assets_disposals';
 
@@ -28,6 +29,9 @@ class AssetDisposal extends Model
         'disposal_notes',
         'docs',
         'users_id',
+        'created_by',
+        'updated_by',
+        'deleted_by',
     ];
 
     public function assetDisposals()

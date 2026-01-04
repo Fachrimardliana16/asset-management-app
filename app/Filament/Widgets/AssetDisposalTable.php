@@ -11,6 +11,7 @@ class AssetDisposalTable extends BaseWidget
 {
     protected static ?int $sort = 17;
     protected int | string | array $columnSpan = 1;
+    protected static bool $isLazy = true;
 
     public function table(Table $table): Table
     {

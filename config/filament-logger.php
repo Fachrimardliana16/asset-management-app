@@ -35,7 +35,15 @@ return [
         'color' => 'warning',
         'logger' => \Z3d0X\FilamentLogger\Loggers\ModelLogger::class,
         'register' => [
-            //App\Models\User::class,
+            \App\Models\User::class,
+            \App\Models\Asset::class,
+            \App\Models\Employee::class,
+            \App\Models\AssetTax::class,
+            \App\Models\AssetMaintenance::class,
+            \App\Models\AssetMutation::class,
+            \App\Models\AssetMonitoring::class,
+            \App\Models\AssetDisposal::class,
+            \App\Models\AssetPurchase::class,
         ],
     ],
 

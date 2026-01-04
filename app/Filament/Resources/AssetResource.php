@@ -177,19 +177,20 @@ class AssetResource extends Resource
                         FileUpload::make('img')
                             ->label('Foto Aset')
                             ->image()
-                            ->multiple()                              // tetap bisa banyak
+                            ->multiple()
                             ->maxFiles(5)
-                            ->maxSize(5120)                           // 5MB per file
+                            ->maxSize(2048)                           // 2MB per file
                             ->directory('assets')
                             ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
-
-                            // Yang bikin "gede" dihapus/dikecilin:
-                            ->imagePreviewHeight('100')               // preview kecil & rapi
-                            ->panelLayout('compact')                  // paling penting! ini yang bikin normal
+                            ->imageResizeMode('cover')                // Auto resize
+                            ->imageCropAspectRatio('1:1')             // Square crop
+                            ->imageResizeTargetWidth('800')           // Max width 800px
+                            ->imageResizeTargetHeight('800')          // Max height 800px
+                            ->imagePreviewHeight('100')
+                            ->panelLayout('compact')
                             ->removeUploadedFileButtonPosition('right')
                             ->uploadButtonPosition('center')
-
-                            ->helperText('Maksimal 5 foto, ≤ 5MB, format JPG/PNG/WebP')
+                            ->helperText('Maksimal 5 foto, ≤ 2MB, otomatis diresize 800x800px')
                             ->columnSpanFull(),
                     ]),
 
@@ -210,8 +211,10 @@ class AssetResource extends Resource
                     ->rounded()
                     ->defaultImageUrl(asset('images/no-image.png'))
                     ->extraImgAttributes(fn($record) => [
-                        'title' => "No. " . $record->getKey() . "\nDibuat: " . $record->created_at->format('d/m/Y H:i')
+                        'title' => "No. " . $record->getKey() . "\nDibuat: " . $record->created_at->format('d/m/Y H:i'),
+                        'loading' => 'lazy'
                     ]),
+
 
                 // 2. Nomor Aset + Nama + Merk (kolom utama)
                 Tables\Columns\TextColumn::make('assets_number')
@@ -273,9 +276,27 @@ class AssetResource extends Resource
                     })
                     ->placeholder('Di Gudang')
                     ->alignCenter(),
+
+                // 8. Created By & Updated By (tracking columns)
+                Tables\Columns\TextColumn::make('creator.username')
+                    ->label('Dibuat Oleh')
+                    ->description(fn($record) => $record->created_at?->format('d/m/Y H:i'), position: 'below')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('updater.username')
+                    ->label('Diupdate Oleh')
+                    ->description(fn($record) => $record->updated_at?->format('d/m/Y H:i'), position: 'below')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\TrashedFilter::make()
+                    ->label('Data Terhapus')
+                    ->placeholder('Tampilkan Semua')
+                    ->trueLabel('Hanya yang Dihapus')
+                    ->falseLabel('Tanpa yang Dihapus')
+                    ->native(false),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
@@ -770,9 +791,28 @@ class AssetResource extends Resource
                         ->modalIcon('heroicon-o-banknotes')
                         ->modalIconColor('success'),
 
-                    // 8. Hapus Record
+                    // 8. Hapus Record (Soft Delete)
                     Tables\Actions\DeleteAction::make()
-                        ->requiresConfirmation(),
+                        ->label('Hapus')
+                        ->requiresConfirmation()
+                        ->modalHeading('Hapus Data Asset')
+                        ->modalDescription('Data akan dipindahkan ke trash dan bisa dipulihkan kembali.')
+                        ->successNotificationTitle('Data berhasil dihapus'),
+
+                    // 9. Restore (untuk data yang sudah dihapus)
+                    Tables\Actions\RestoreAction::make()
+                        ->label('Pulihkan')
+                        ->successNotificationTitle('Data berhasil dipulihkan'),
+
+                    // 10. Force Delete (hapus permanen)
+                    Tables\Actions\ForceDeleteAction::make()
+                        ->label('Hapus Permanen')
+                        ->requiresConfirmation()
+                        ->modalHeading('Hapus Permanen?')
+                        ->modalDescription('Data akan dihapus PERMANEN dan tidak bisa dipulihkan!')
+                        ->modalIcon('heroicon-o-exclamation-triangle')
+                        ->modalIconColor('danger')
+                        ->successNotificationTitle('Data dihapus permanen'),
 
                 ])
                     ->label('Action')
@@ -804,7 +844,7 @@ class AssetResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\TaxesRelationManager::class,
+            //
         ];
     }
 
@@ -820,18 +860,13 @@ class AssetResource extends Resource
 
     /**
      * Add eager loading to prevent N+1 query issues
+     * Enable soft delete support
      */
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->with([
-                'categoryAsset',
-                'conditionAsset',
-                'assetsStatus',
-                'AssetTransactionStatus',
-                'latestMutation.AssetsMutationemployee',
-                'latestMutation.AssetsMutationlocation',
-                'latestMutation.AssetsMutationsubLocation',
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
             ])
             ->with([
                 'categoryAsset',
@@ -840,6 +875,9 @@ class AssetResource extends Resource
                 'AssetTransactionStatus',
                 'latestMutation.AssetsMutationemployee',
                 'latestMutation.AssetsMutationlocation',
+                'latestMutation.AssetsMutationsubLocation',
+                'creator',
+                'updater',
             ]);
     }
 

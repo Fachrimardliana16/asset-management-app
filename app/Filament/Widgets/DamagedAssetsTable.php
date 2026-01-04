@@ -12,16 +12,20 @@ class DamagedAssetsTable extends BaseWidget
     protected static ?int $sort = 12;
     protected int | string | array $columnSpan = 1;
 
+    protected static bool $isLazy = true;
+
     public function table(Table $table): Table
     {
         return $table
             ->heading('Aset Rusak')
             ->query(
                 Asset::query()
+                    ->with(['categoryAsset', 'conditionAsset'])
                     ->whereIn('condition_id', [2, 3]) // 2 = Rusak, 3 = Perbaikan
                     ->latest()
                     ->limit(10)
             )
+            ->poll(null)
             ->columns([
                 Tables\Columns\TextColumn::make('assets_number')
                     ->label('Nomor Aset')
@@ -35,14 +39,17 @@ class DamagedAssetsTable extends BaseWidget
 
                 Tables\Columns\TextColumn::make('categoryAsset.name')
                     ->label('Kategori')
+                    ->default('-')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('conditionAsset.name')
                     ->label('Kondisi')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
+                    ->default('-')
+                    ->color(fn(?string $state): string => match ($state) {
                         'Rusak' => 'danger',
                         'Perbaikan' => 'warning',
+                        null => 'gray',
                         default => 'gray',
                     }),
 

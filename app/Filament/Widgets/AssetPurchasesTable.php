@@ -10,8 +10,7 @@ use Filament\Widgets\TableWidget as BaseWidget;
 class AssetPurchasesTable extends BaseWidget
 {
     protected static ?int $sort = 11;
-    protected int | string | array $columnSpan = 1;
-
+    protected int | string | array $columnSpan = 1;    protected static bool $isLazy = true;
     public function table(Table $table): Table
     {
         return $table

@@ -5,10 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Asset extends Model
 {
-    use HasFactory, HasUuids;
+    use HasFactory, HasUuids, SoftDeletes, LogsActivity;
 
     protected $table = 'assets';
 
@@ -28,6 +31,9 @@ class Asset extends Model
         'transaction_status_id',
         'desc',
         'users_id',
+        'created_by',
+        'updated_by',
+        'deleted_by',
     ];
 
     protected $casts = [
@@ -43,6 +49,14 @@ class Asset extends Model
     public function conditionAsset()
     {
         return $this->belongsTo(MasterAssetsCondition::class, 'condition_id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['assets_number', 'name', 'category_id', 'purchase_date', 'condition_id', 'price', 'status_id'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 
     public function condition()
@@ -122,4 +136,20 @@ class Asset extends Model
         return $this->hasOne(AssetTax::class, 'asset_id', 'id')
             ->latestOfMany();
     }
-}
+    /**
+     * User Tracking Relations
+     */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function deleter()
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
+    }}

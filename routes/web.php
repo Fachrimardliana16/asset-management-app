@@ -23,7 +23,7 @@ Route::middleware(['auth'])->group(function () {
     // Print barcode/QR stiker
     Route::get('/asset/{id}/print-barcode', [AssetBarcodeController::class, 'printBarcode'])
         ->name('asset.print-barcode');
-    
+
     // Print barcode massal
     Route::get('/asset/print-barcode-bulk', [AssetBarcodeController::class, 'printBarcodeBulk'])
         ->name('asset.print-barcode-bulk');
@@ -61,6 +61,10 @@ Route::middleware(['auth'])->group(function () {
         ->name('export.asset-maintenance');
     Route::get('/export/asset-disposal', [ExportPdfController::class, 'assetDisposal'])
         ->name('export.asset-disposal');
+    Route::get('/export/asset-tax', [ExportPdfController::class, 'assetTax'])
+        ->name('export.asset-tax');
+    Route::get('/export/asset-profile/{id}', [ExportPdfController::class, 'assetProfile'])
+        ->name('export.asset-profile');
 });
 
 // QR Code Scan Route - redirect ke monitoring (dengan login required)

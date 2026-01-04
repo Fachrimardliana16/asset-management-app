@@ -24,6 +24,16 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register Observers
         \App\Models\AssetRequestItem::observe(\App\Observers\AssetRequestItemObserver::class);
+        
+        // Register UserTrackingObserver untuk semua models yang membutuhkan user tracking
+        \App\Models\Asset::observe(\App\Observers\UserTrackingObserver::class);
+        \App\Models\Employee::observe(\App\Observers\UserTrackingObserver::class);
+        \App\Models\AssetTax::observe(\App\Observers\UserTrackingObserver::class);
+        \App\Models\AssetMaintenance::observe(\App\Observers\UserTrackingObserver::class);
+        \App\Models\AssetMutation::observe(\App\Observers\UserTrackingObserver::class);
+        \App\Models\AssetMonitoring::observe(\App\Observers\UserTrackingObserver::class);
+        \App\Models\AssetDisposal::observe(\App\Observers\UserTrackingObserver::class);
+        \App\Models\AssetPurchase::observe(\App\Observers\UserTrackingObserver::class);
 
         Table::configureUsing(function (Table $table): void {
             $table

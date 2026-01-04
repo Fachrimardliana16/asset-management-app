@@ -12,15 +12,19 @@ class AssetByConditionChart extends ChartWidget
     protected static ?int $sort = 6;
     protected int | string | array $columnSpan = 1;
     protected static ?string $maxHeight = '250px';
+    protected static bool $isLazy = true;
+    protected static ?string $pollingInterval = null;
 
     protected function getData(): array
     {
-        try {
-            $data = Asset::join('master_assets_condition', 'assets.condition_id', '=', 'master_assets_condition.id')
-                ->select('master_assets_condition.name', DB::raw('count(assets.id) as total'))
-                ->groupBy('master_assets_condition.name', 'master_assets_condition.id')
-                ->pluck('total', 'name')
-                ->toArray();
+        return cache()->remember('chart.asset.by.condition', 600, function() {
+            try {
+                $data = DB::table('assets')
+                    ->join('master_assets_condition', 'assets.condition_id', '=', 'master_assets_condition.id')
+                    ->select('master_assets_condition.name', DB::raw('count(*) as total'))
+                    ->groupBy('master_assets_condition.name', 'master_assets_condition.id')
+                    ->pluck('total', 'name')
+                    ->toArray();
 
             if (empty($data)) {
                 $totalAssets = Asset::count();
@@ -51,7 +55,8 @@ class AssetByConditionChart extends ChartWidget
                 ],
             ],
             'labels' => array_keys($data),
-        ];
+            ];
+        });
     }
 
     protected function getType(): string

@@ -10,6 +10,8 @@ class AssetMaintenanceChart extends ChartWidget
 {
     protected static ?string $heading = 'Total Pemeliharaan Barang';
     protected static ?int $sort = 4;
+    protected static bool $isLazy = true;
+    protected static ?string $pollingInterval = null;
 
     public ?string $filter = 'month';
 

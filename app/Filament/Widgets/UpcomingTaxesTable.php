@@ -13,12 +13,15 @@ class UpcomingTaxesTable extends BaseWidget
     protected static ?int $sort = 16;
     protected int | string | array $columnSpan = 1;
 
+    protected static bool $isLazy = true;
+
     public function table(Table $table): Table
     {
         return $table
             ->heading('Pajak yang Akan Dibayar Seminggu')
             ->query(
                 AssetTax::query()
+                    ->with(['asset', 'taxType'])
                     ->whereIn('payment_status', ['unpaid', 'pending'])
                     ->whereBetween('due_date', [
                         Carbon::now(),
@@ -26,19 +29,23 @@ class UpcomingTaxesTable extends BaseWidget
                     ])
                     ->orderBy('due_date', 'asc')
             )
+            ->poll(null)
             ->columns([
                 Tables\Columns\TextColumn::make('asset.assets_number')
                     ->label('Nomor Aset')
+                    ->default('-')
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('asset.name')
                     ->label('Nama Aset')
+                    ->default('-')
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('taxType.name')
                     ->label('Jenis Pajak')
+                    ->default('-')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('tax_amount')

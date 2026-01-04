@@ -20,6 +20,33 @@ class ViewAsset extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('print_profile')
+                ->label('Cetak Profil Aset')
+                ->icon('heroicon-o-document-text')
+                ->color('primary')
+                ->form([
+                    \Filament\Forms\Components\CheckboxList::make('sections')
+                        ->label('Pilih Section yang Akan Dicetak')
+                        ->options([
+                            'qr_code' => 'QR Code Aset',
+                            'asset_info' => 'Informasi Aset',
+                            'financial_info' => 'Informasi Keuangan',
+                            'mutations' => 'Riwayat Mutasi',
+                            'monitoring' => 'Riwayat Monitoring',
+                            'maintenance' => 'Riwayat Pemeliharaan',
+                            'taxes' => 'Riwayat Pembayaran Pajak',
+                        ])
+                        ->default(['qr_code', 'asset_info', 'financial_info', 'mutations', 'monitoring', 'maintenance', 'taxes'])
+                        ->columns(2)
+                        ->required()
+                        ->minItems(1)
+                        ->gridDirection('row'),
+                ])
+                ->action(function (array $data) {
+                    $sections = implode(',', $data['sections']);
+                    $url = route('export.asset-profile', ['id' => $this->record->id, 'sections' => $sections]);
+                    $this->js("window.open('$url', '_blank')");
+                }),
             Actions\Action::make('print_qrcode')
                 ->label('Print QR Code')
                 ->icon('heroicon-o-printer')
@@ -198,6 +225,7 @@ class ViewAsset extends ViewRecord
                             ->size('lg'),
                         RepeatableEntry::make('AssetsMutation')
                             ->label('')
+                            ->state(fn($record) => $record->AssetsMutation()->latest()->limit(20)->get())
                             ->schema([
                                 Grid::make(5)
                                     ->schema([
@@ -222,7 +250,8 @@ class ViewAsset extends ViewRecord
                                     ]),
                             ])
                             ->columns(1)
-                            ->contained(true),
+                            ->contained(true)
+                            ->extraAttributes(['class' => 'text-xs']),
                         TextEntry::make('no_mutation')
                             ->label('')
                             ->default('Belum ada riwayat mutasi')
@@ -235,6 +264,7 @@ class ViewAsset extends ViewRecord
                     ->schema([
                         RepeatableEntry::make('assetMonitoring')
                             ->label('')
+                            ->state(fn($record) => $record->assetMonitoring()->latest()->limit(15)->get())
                             ->schema([
                                 Grid::make(4)
                                     ->schema([
@@ -282,6 +312,7 @@ class ViewAsset extends ViewRecord
                     ->schema([
                         RepeatableEntry::make('AssetMaintenance')
                             ->label('')
+                            ->state(fn($record) => $record->AssetMaintenance()->latest()->limit(15)->get())
                             ->schema([
                                 Grid::make(4)
                                     ->schema([
@@ -315,6 +346,78 @@ class ViewAsset extends ViewRecord
                             ->label('')
                             ->default('Belum ada riwayat pemeliharaan')
                             ->visible(fn($record) => $record->AssetMaintenance->isEmpty()),
+                    ])
+                    ->collapsible()
+                    ->collapsed(),
+
+                Section::make('Riwayat Pembayaran Pajak')
+                    ->description('Riwayat pembayaran pajak aset')
+                    ->schema([
+                        RepeatableEntry::make('taxes')
+                            ->label('')
+                            ->state(fn($record) => $record->taxes()->latest()->limit(10)->get())
+                            ->schema([
+                                Grid::make(5)
+                                    ->schema([
+                                        TextEntry::make('taxType.name')
+                                            ->label('Jenis Pajak')
+                                            ->badge()
+                                            ->color('info'),
+                                        TextEntry::make('tax_year')
+                                            ->label('Tahun Pajak')
+                                            ->badge(),
+                                        TextEntry::make('tax_amount')
+                                            ->label('Nilai Pajak')
+                                            ->money('IDR'),
+                                        TextEntry::make('penalty_amount')
+                                            ->label('Denda')
+                                            ->money('IDR')
+                                            ->color(fn($state) => $state > 0 ? 'warning' : 'gray'),
+                                        TextEntry::make('payment_status')
+                                            ->label('Status')
+                                            ->badge()
+                                            ->color(fn($state) => match ($state) {
+                                                'paid' => 'success',
+                                                'pending' => 'warning',
+                                                'overdue' => 'danger',
+                                                'cancelled' => 'gray',
+                                                default => 'gray',
+                                            })
+                                            ->formatStateUsing(fn($state) => match ($state) {
+                                                'paid' => 'Lunas',
+                                                'pending' => 'Pending',
+                                                'overdue' => 'Terlambat',
+                                                'cancelled' => 'Batal',
+                                                default => ucfirst($state),
+                                            }),
+                                    ]),
+                                Grid::make(3)
+                                    ->schema([
+                                        TextEntry::make('due_date')
+                                            ->label('Jatuh Tempo')
+                                            ->date('d F Y')
+                                            ->color(fn($record) => $record->due_date < now() && $record->payment_status !== 'paid' ? 'danger' : 'gray'),
+                                        TextEntry::make('payment_date')
+                                            ->label('Tanggal Bayar')
+                                            ->date('d F Y')
+                                            ->placeholder('-'),
+                                        TextEntry::make('total_payment')
+                                            ->label('Total Dibayar')
+                                            ->state(fn($record) => $record->tax_amount + $record->penalty_amount)
+                                            ->money('IDR')
+                                            ->weight('bold'),
+                                    ]),
+                                TextEntry::make('notes')
+                                    ->label('Catatan')
+                                    ->placeholder('-')
+                                    ->columnSpanFull(),
+                            ])
+                            ->columns(1)
+                            ->contained(true),
+                        TextEntry::make('no_tax')
+                            ->label('')
+                            ->default('Belum ada histori pajak')
+                            ->visible(fn($record) => $record->taxes->isEmpty()),
                     ])
                     ->collapsible()
                     ->collapsed(),

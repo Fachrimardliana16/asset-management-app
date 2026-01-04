@@ -10,8 +10,8 @@ use Filament\Forms\Components\Select;
 class AssetRequestsChart extends ChartWidget
 {
     protected static ?string $heading = 'Total Permintaan Barang';
-    protected static ?int $sort = 2;
-
+    protected static ?int $sort = 2;    protected static bool $isLazy = true;
+    protected static ?string $pollingInterval = null;
     public ?string $filter = 'month';
 
     protected function getFilters(): ?array

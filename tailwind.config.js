@@ -7,4 +7,13 @@ export default {
         './resources/views/filament/**/*.blade.php',
         './vendor/filament/**/*.blade.php',
     ],
+    safelist: [
+        'transition-page',
+    ],
+    theme: {
+        extend: {
+            // Add custom theme if needed
+        },
+    },
+    plugins: [],
 }

@@ -1,3 +1,10 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Optimized: Remove unused CSS, minify in production */
+@layer utilities {
+    .transition-page {
+        @apply transition-all duration-200 ease-in-out;
+    }
+}

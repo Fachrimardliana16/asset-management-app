@@ -35,6 +35,7 @@
         "league/commonmark": "^2.4",
         "milon/barcode": "^12.0",
         "riodwanto/filament-ace-editor": "^1.0",
+        "spatie/laravel-image-optimizer": "^1.8",
         "z3d0x/filament-logger": "^0.6.3"
     },
     "require-dev": {

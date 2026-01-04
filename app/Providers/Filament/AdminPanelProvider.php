@@ -41,6 +41,7 @@ class AdminPanelProvider extends PanelProvider
             ->databaseNotifications()->databaseNotificationsPolling('60s')
             ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
             ->sidebarCollapsibleOnDesktop()
+            ->spa() // Enable SPA mode untuk faster page transitions
             ->navigationGroups([
 
                 NavigationGroup::make('Dokumen Aplikasi'),
