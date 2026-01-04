@@ -130,9 +130,9 @@ class AssetTax extends Model implements HasMedia
     public function scopeOverdue($query)
     {
         return $query->where('payment_status', 'overdue')
-            ->orWhere(function($q) {
+            ->orWhere(function ($q) {
                 $q->where('payment_status', 'pending')
-                  ->where('due_date', '<', now());
+                    ->where('due_date', '<', now());
             });
     }
 
@@ -169,7 +169,7 @@ class AssetTax extends Model implements HasMedia
         if ($this->payment_status === 'paid') {
             return false;
         }
-        
+
         return $this->due_date < now();
     }
 
@@ -181,7 +181,7 @@ class AssetTax extends Model implements HasMedia
         if (!$this->isOverdue()) {
             return 0;
         }
-        
+
         return now()->diffInDays($this->due_date);
     }
 
@@ -191,7 +191,7 @@ class AssetTax extends Model implements HasMedia
     public function calculatePenalty(): array
     {
         $taxType = $this->taxType;
-        
+
         if (!$taxType || !$taxType->has_penalty) {
             return [
                 'penalty_amount' => 0,
@@ -201,7 +201,7 @@ class AssetTax extends Model implements HasMedia
         }
 
         $overdueDays = $this->getOverdueDaysCount();
-        
+
         if ($overdueDays <= 0) {
             return [
                 'penalty_amount' => 0,
@@ -215,7 +215,7 @@ class AssetTax extends Model implements HasMedia
 
         if ($taxType->penalty_type === 'percentage') {
             $penaltyRate = $taxType->penalty_percentage;
-            
+
             if ($taxType->penalty_period === 'daily') {
                 // Denda per hari
                 $penaltyAmount = $this->tax_amount * ($penaltyRate / 100) * $overdueDays;
@@ -257,7 +257,7 @@ class AssetTax extends Model implements HasMedia
     public function updatePenalty(): void
     {
         $penalty = $this->calculatePenalty();
-        
+
         $this->update([
             'penalty_amount' => $penalty['penalty_amount'],
             'overdue_days' => $penalty['overdue_days'],
@@ -278,7 +278,7 @@ class AssetTax extends Model implements HasMedia
      */
     public function getPaymentStatusColorAttribute(): string
     {
-        return match($this->payment_status) {
+        return match ($this->payment_status) {
             'paid' => 'success',
             'pending' => 'warning',
             'overdue' => 'danger',
@@ -292,7 +292,7 @@ class AssetTax extends Model implements HasMedia
      */
     public function getApprovalStatusColorAttribute(): string
     {
-        return match($this->approval_status) {
+        return match ($this->approval_status) {
             'approved' => 'success',
             'pending' => 'warning',
             'rejected' => 'danger',

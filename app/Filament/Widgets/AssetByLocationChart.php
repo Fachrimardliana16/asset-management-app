@@ -17,43 +17,43 @@ class AssetByLocationChart extends ChartWidget
 
     protected function getData(): array
     {
-        return cache()->remember('chart.asset.by.location', 600, function() {
-        // Get assets with their current location from latest mutation
-        $data = DB::table('assets')
-            ->leftJoin('assets_mutation', function ($join) {
-                $join->on('assets.id', '=', 'assets_mutation.assets_id')
-                    ->whereRaw('assets_mutation.id = (SELECT id FROM assets_mutation WHERE assets_id = assets.id ORDER BY mutation_date DESC LIMIT 1)');
-            })
-            ->leftJoin('master_assets_locations', 'assets_mutation.location_id', '=', 'master_assets_locations.id')
-            ->select('master_assets_locations.name', DB::raw('count(assets.id) as total'))
-            ->groupBy('master_assets_locations.name')
-            ->pluck('total', 'name')
-            ->toArray();
+        return cache()->remember('chart.asset.by.location', 600, function () {
+            // Get assets with their current location from latest mutation
+            $data = DB::table('assets')
+                ->leftJoin('assets_mutation', function ($join) {
+                    $join->on('assets.id', '=', 'assets_mutation.assets_id')
+                        ->whereRaw('assets_mutation.id = (SELECT id FROM assets_mutation WHERE assets_id = assets.id ORDER BY mutation_date DESC LIMIT 1)');
+                })
+                ->leftJoin('master_assets_locations', 'assets_mutation.location_id', '=', 'master_assets_locations.id')
+                ->select('master_assets_locations.name', DB::raw('count(assets.id) as total'))
+                ->groupBy('master_assets_locations.name')
+                ->pluck('total', 'name')
+                ->toArray();
 
-        // Remove null entries
-        $data = array_filter($data, function ($key) {
-            return $key !== null && $key !== '';
-        }, ARRAY_FILTER_USE_KEY);
+            // Remove null entries
+            $data = array_filter($data, function ($key) {
+                return $key !== null && $key !== '';
+            }, ARRAY_FILTER_USE_KEY);
 
-        // If no data from mutations, count assets without location
-        if (empty($data)) {
-            $totalAssets = Asset::count();
-            $data['Belum Ada Lokasi'] = $totalAssets > 0 ? $totalAssets : 1;
-        }
+            // If no data from mutations, count assets without location
+            if (empty($data)) {
+                $totalAssets = Asset::count();
+                $data['Belum Ada Lokasi'] = $totalAssets > 0 ? $totalAssets : 1;
+            }
 
-        $colors = $this->generateColors(count($data));
+            $colors = $this->generateColors(count($data));
 
-        return [
-            'datasets' => [
-                [
-                    'label' => 'Jumlah Aset',
-                    'data' => array_values($data),
-                    'backgroundColor' => $colors['background'],
-                    'borderColor' => $colors['border'],
-                    'borderWidth' => 1,
+            return [
+                'datasets' => [
+                    [
+                        'label' => 'Jumlah Aset',
+                        'data' => array_values($data),
+                        'backgroundColor' => $colors['background'],
+                        'borderColor' => $colors['border'],
+                        'borderWidth' => 1,
+                    ],
                 ],
-            ],
-            'labels' => array_keys($data),
+                'labels' => array_keys($data),
             ];
         });
     }

@@ -6,7 +6,7 @@
 // Preload next page resources on hover
 document.addEventListener('DOMContentLoaded', function() {
     const links = document.querySelectorAll('a[href^="/"]');
-    
+
     links.forEach(link => {
         link.addEventListener('mouseenter', function() {
             const href = this.getAttribute('href');

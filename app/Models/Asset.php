@@ -152,4 +152,5 @@ class Asset extends Model
     public function deleter()
     {
         return $this->belongsTo(User::class, 'deleted_by');
-    }}
+    }
+}

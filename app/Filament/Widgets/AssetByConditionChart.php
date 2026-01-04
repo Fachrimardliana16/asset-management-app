@@ -17,7 +17,7 @@ class AssetByConditionChart extends ChartWidget
 
     protected function getData(): array
     {
-        return cache()->remember('chart.asset.by.condition', 600, function() {
+        return cache()->remember('chart.asset.by.condition', 600, function () {
             try {
                 $data = DB::table('assets')
                     ->join('master_assets_condition', 'assets.condition_id', '=', 'master_assets_condition.id')
@@ -26,35 +26,35 @@ class AssetByConditionChart extends ChartWidget
                     ->pluck('total', 'name')
                     ->toArray();
 
-            if (empty($data)) {
-                $totalAssets = Asset::count();
-                $data['Belum Ada Data'] = $totalAssets > 0 ? $totalAssets : 1;
+                if (empty($data)) {
+                    $totalAssets = Asset::count();
+                    $data['Belum Ada Data'] = $totalAssets > 0 ? $totalAssets : 1;
+                }
+            } catch (\Exception $e) {
+                $data['Belum Ada Data'] = 1;
             }
-        } catch (\Exception $e) {
-            $data['Belum Ada Data'] = 1;
-        }
 
-        return [
-            'datasets' => [
-                [
-                    'label' => 'Jumlah Aset',
-                    'data' => array_values($data),
-                    'backgroundColor' => [
-                        'rgba(34, 197, 94, 0.7)',   // Baik - green
-                        'rgba(239, 68, 68, 0.7)',   // Rusak - red
-                        'rgba(245, 158, 11, 0.7)',  // Perbaikan - orange
-                        'rgba(59, 130, 246, 0.7)',  // Baru - blue
+            return [
+                'datasets' => [
+                    [
+                        'label' => 'Jumlah Aset',
+                        'data' => array_values($data),
+                        'backgroundColor' => [
+                            'rgba(34, 197, 94, 0.7)',   // Baik - green
+                            'rgba(239, 68, 68, 0.7)',   // Rusak - red
+                            'rgba(245, 158, 11, 0.7)',  // Perbaikan - orange
+                            'rgba(59, 130, 246, 0.7)',  // Baru - blue
+                        ],
+                        'borderColor' => [
+                            'rgb(34, 197, 94)',
+                            'rgb(239, 68, 68)',
+                            'rgb(245, 158, 11)',
+                            'rgb(59, 130, 246)',
+                        ],
+                        'borderWidth' => 1,
                     ],
-                    'borderColor' => [
-                        'rgb(34, 197, 94)',
-                        'rgb(239, 68, 68)',
-                        'rgb(245, 158, 11)',
-                        'rgb(59, 130, 246)',
-                    ],
-                    'borderWidth' => 1,
                 ],
-            ],
-            'labels' => array_keys($data),
+                'labels' => array_keys($data),
             ];
         });
     }

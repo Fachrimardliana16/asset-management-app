@@ -31,17 +31,17 @@ return new class extends Migration
                     $table->uuid('created_by')->nullable()->after('updated_at');
                     $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
                 }
-                
+
                 if (!Schema::hasColumn($tableName, 'updated_by')) {
                     $table->uuid('updated_by')->nullable()->after('created_by');
                     $table->foreign('updated_by')->references('id')->on('users')->onDelete('set null');
                 }
-                
+
                 if (!Schema::hasColumn($tableName, 'deleted_by')) {
                     $table->uuid('deleted_by')->nullable()->after('updated_by');
                     $table->foreign('deleted_by')->references('id')->on('users')->onDelete('set null');
                 }
-                
+
                 // Add soft deletes (jika belum ada)
                 if (!Schema::hasColumn($tableName, 'deleted_at')) {
                     $table->softDeletes()->after('deleted_by');

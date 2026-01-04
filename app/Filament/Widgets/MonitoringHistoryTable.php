@@ -10,7 +10,8 @@ use Filament\Widgets\TableWidget as BaseWidget;
 class MonitoringHistoryTable extends BaseWidget
 {
     protected static ?int $sort = 13;
-    protected int | string | array $columnSpan = 1;    protected static bool $isLazy = true;
+    protected int | string | array $columnSpan = 1;
+    protected static bool $isLazy = true;
     public function table(Table $table): Table
     {
         return $table

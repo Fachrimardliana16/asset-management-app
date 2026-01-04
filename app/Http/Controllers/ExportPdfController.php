@@ -415,15 +415,15 @@ class ExportPdfController extends Controller
         try {
             // Parse selected sections first
             $selectedSections = explode(',', $request->get('sections', 'asset_info'));
-            
+
             // Build query with conditional eager loading based on selected sections
             $query = Asset::query();
-            
+
             // Always load basic info
             if (in_array('asset_info', $selectedSections) || in_array('financial_info', $selectedSections)) {
                 $query->with(['categoryAsset', 'assetsStatus', 'conditionAsset', 'AssetTransactionStatus']);
             }
-            
+
             // Conditionally load relations only if section is selected
             if (in_array('mutations', $selectedSections)) {
                 $query->with([
@@ -436,24 +436,24 @@ class ExportPdfController extends Controller
                     }
                 ]);
             }
-            
+
             if (in_array('monitoring', $selectedSections)) {
                 $query->with(['assetMonitoring' => function($q) {
                     $q->with(['MonitoringoldCondition', 'MonitoringNewCondition', 'user'])
                       ->latest()->limit(30); // Limit to last 30 monitoring records
                 }]);
             }
-            
+
             if (in_array('maintenance', $selectedSections)) {
                 $query->with(['AssetMaintenance' => function($q) {
                     $q->latest()->limit(30); // Limit to last 30 maintenance records
                 }]);
             }
-            
+
             if (in_array('taxes', $selectedSections)) {
                 $query->with(['taxes.taxType']);
             }
-            
+
             $asset = $query->findOrFail($id);
 
             // Generate QR Code

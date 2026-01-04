@@ -24,7 +24,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register Observers
         \App\Models\AssetRequestItem::observe(\App\Observers\AssetRequestItemObserver::class);
-        
+
         // Register UserTrackingObserver untuk semua models yang membutuhkan user tracking
         \App\Models\Asset::observe(\App\Observers\UserTrackingObserver::class);
         \App\Models\Employee::observe(\App\Observers\UserTrackingObserver::class);

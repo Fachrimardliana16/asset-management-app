@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Auth;
 
 /**
  * UserTrackingObserver
- * 
+ *
  * Observer untuk otomatis mengisi kolom created_by, updated_by, deleted_by
  * berdasarkan user yang sedang login
  */
@@ -23,7 +23,7 @@ class UserTrackingObserver
             if ($model->isFillable('created_by') && is_null($model->created_by)) {
                 $model->created_by = Auth::id();
             }
-            
+
             // Set updated_by juga saat create
             if ($model->isFillable('updated_by')) {
                 $model->updated_by = Auth::id();
@@ -68,7 +68,7 @@ class UserTrackingObserver
             if ($model->isFillable('deleted_by')) {
                 $model->deleted_by = null;
             }
-            
+
             // Set updated_by saat restore
             if ($model->isFillable('updated_by')) {
                 $model->updated_by = Auth::id();

@@ -19,7 +19,7 @@ class LogUserActivity
         // Log only authenticated user activities
         if (auth()->check()) {
             $user = auth()->user();
-            
+
             // Log sensitive operations
             if (in_array($request->method(), ['POST', 'PUT', 'PATCH', 'DELETE'])) {
                 Log::channel('activity')->info('User Activity', [

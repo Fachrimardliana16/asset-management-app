@@ -17,36 +17,36 @@ class AssetByCategoryChart extends ChartWidget
 
     protected function getData(): array
     {
-        return cache()->remember('chart.asset.by.category', 600, function() {
-        try {
-            $data = Asset::join('master_assets_category', 'assets.category_id', '=', 'master_assets_category.id')
-                ->select('master_assets_category.name', DB::raw('count(assets.id) as total'))
-                ->groupBy('master_assets_category.name', 'master_assets_category.id')
-                ->pluck('total', 'name')
-                ->toArray();
+        return cache()->remember('chart.asset.by.category', 600, function () {
+            try {
+                $data = Asset::join('master_assets_category', 'assets.category_id', '=', 'master_assets_category.id')
+                    ->select('master_assets_category.name', DB::raw('count(assets.id) as total'))
+                    ->groupBy('master_assets_category.name', 'master_assets_category.id')
+                    ->pluck('total', 'name')
+                    ->toArray();
 
-            if (empty($data)) {
-                $totalAssets = Asset::count();
-                $data['Belum Ada Data'] = $totalAssets > 0 ? $totalAssets : 1;
+                if (empty($data)) {
+                    $totalAssets = Asset::count();
+                    $data['Belum Ada Data'] = $totalAssets > 0 ? $totalAssets : 1;
+                }
+            } catch (\Exception $e) {
+                $data['Belum Ada Data'] = 1;
             }
-        } catch (\Exception $e) {
-            $data['Belum Ada Data'] = 1;
-        }
 
-        // Generate dynamic colors based on number of categories
-        $colors = $this->generateColors(count($data));
+            // Generate dynamic colors based on number of categories
+            $colors = $this->generateColors(count($data));
 
-        return [
-            'datasets' => [
-                [
-                    'label' => 'Jumlah Aset',
-                    'data' => array_values($data),
-                    'backgroundColor' => $colors['background'],
-                    'borderColor' => $colors['border'],
-                    'borderWidth' => 1,
+            return [
+                'datasets' => [
+                    [
+                        'label' => 'Jumlah Aset',
+                        'data' => array_values($data),
+                        'backgroundColor' => $colors['background'],
+                        'borderColor' => $colors['border'],
+                        'borderWidth' => 1,
+                    ],
                 ],
-            ],
-            'labels' => array_keys($data),
+                'labels' => array_keys($data),
             ];
         });
     }

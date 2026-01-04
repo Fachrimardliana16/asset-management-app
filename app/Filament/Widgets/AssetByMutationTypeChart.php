@@ -11,7 +11,8 @@ class AssetByMutationTypeChart extends ChartWidget
     protected static ?string $heading = 'Data Aset Berdasarkan Jenis Mutasi';
     protected static ?int $sort = 9;
     protected int | string | array $columnSpan = 1;
-    protected static ?string $maxHeight = '250px';    protected static bool $isLazy = true;
+    protected static ?string $maxHeight = '250px';
+    protected static bool $isLazy = true;
     protected static ?string $pollingInterval = null;
     protected function getData(): array
     {
