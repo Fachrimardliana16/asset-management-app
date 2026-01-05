@@ -452,7 +452,9 @@ class ExportPdfController extends Controller
             }
 
             if (in_array('taxes', $selectedSections)) {
-                $query->with(['taxes.taxType']);
+                $query->with(['taxes' => function ($q) {
+                    $q->with('taxType')->latest();
+                }]);
             }
 
             $asset = $query->findOrFail($id);
@@ -477,8 +479,10 @@ class ExportPdfController extends Controller
             ], 404);
         } catch (\Exception $e) {
             \Log::error('Export Asset Profile PDF Error: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
             return response()->json([
-                'error' => 'Gagal mengekspor profil aset: ' . $e->getMessage()
+                'error' => 'Gagal mengekspor profil aset: ' . $e->getMessage(),
+                'trace' => config('app.debug') ? $e->getTraceAsString() : null
             ], 500);
         }
     }

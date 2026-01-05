@@ -539,7 +539,7 @@
                         </span>
                     </td>
                     <td>{{ $maintenance->location_service ?? '-' }}</td>
-                    <td class="text-right">Rp {{ number_format($maintenance->service_cost, 0, ',', '.') }}</td>
+                    <td class="text-right">Rp {{ number_format($maintenance->service_cost ?? 0, 0, ',', '.') }}</td>
                     <td>{{ $maintenance->desc ?? '-' }}</td>
                 </tr>
                 @endforeach
@@ -579,9 +579,9 @@
                 <tr>
                     <td class="text-center">{{ $index + 1 }}</td>
                     <td>{{ $tax->taxType->name ?? '-' }}</td>
-                    <td class="text-center">{{ $tax->tax_year }}</td>
-                    <td class="text-right">Rp {{ number_format($tax->tax_amount, 0, ',', '.') }}</td>
-                    <td class="text-right">Rp {{ number_format($tax->penalty_amount, 0, ',', '.') }}</td>
+                    <td class="text-center">{{ $tax->tax_year ?? '-' }}</td>
+                    <td class="text-right">Rp {{ number_format($tax->tax_amount ?? 0, 0, ',', '.') }}</td>
+                    <td class="text-right">Rp {{ number_format($tax->penalty_amount ?? 0, 0, ',', '.') }}</td>
                     <td class="text-center">{{ $tax->due_date ? \Carbon\Carbon::parse($tax->due_date)->format('d/m/Y') : '-' }}</td>
                     <td class="text-center">{{ $tax->payment_date ? \Carbon\Carbon::parse($tax->payment_date)->format('d/m/Y') : '-' }}</td>
                     <td class="text-center">
@@ -598,7 +598,7 @@
                             @endif
                         </span>
                     </td>
-                    <td class="text-right"><strong>Rp {{ number_format($tax->tax_amount + $tax->penalty_amount, 0, ',', '.') }}</strong></td>
+                    <td class="text-right"><strong>Rp {{ number_format(($tax->tax_amount ?? 0) + ($tax->penalty_amount ?? 0), 0, ',', '.') }}</strong></td>
                 </tr>
                 @endforeach
             </tbody>
