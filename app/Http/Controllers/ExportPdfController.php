@@ -431,22 +431,22 @@ class ExportPdfController extends Controller
                     'latestMutation.AssetsMutationtransactionStatus',
                     'latestMutation.AssetsMutationemployee',
                     'latestMutation.AssetsMutationlocation',
-                    'AssetsMutation' => function($q) {
+                    'AssetsMutation' => function ($q) {
                         $q->with(['AssetsMutationtransactionStatus', 'AssetsMutationemployee', 'AssetsMutationlocation'])
-                          ->latest()->limit(50); // Limit to last 50 mutations
+                            ->latest()->limit(50); // Limit to last 50 mutations
                     }
                 ]);
             }
 
             if (in_array('monitoring', $selectedSections)) {
-                $query->with(['assetMonitoring' => function($q) {
+                $query->with(['assetMonitoring' => function ($q) {
                     $q->with(['MonitoringoldCondition', 'MonitoringNewCondition', 'user'])
-                      ->latest()->limit(30); // Limit to last 30 monitoring records
+                        ->latest()->limit(30); // Limit to last 30 monitoring records
                 }]);
             }
 
             if (in_array('maintenance', $selectedSections)) {
-                $query->with(['AssetMaintenance' => function($q) {
+                $query->with(['AssetMaintenance' => function ($q) {
                     $q->latest()->limit(30); // Limit to last 30 maintenance records
                 }]);
             }
