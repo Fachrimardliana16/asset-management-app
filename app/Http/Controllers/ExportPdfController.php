@@ -185,8 +185,9 @@ class ExportPdfController extends Controller
             ])->setPaper('a4', 'landscape');
 
             return $pdf->download('laporan-data-aset.pdf');
-        } catch (\\Exception $e) {
-            \\Log::error('Export Asset PDF Error: ' . $e->getMessage());\n            return response()->json([
+        } catch (\Exception $e) {
+            \Log::error('Export Asset PDF Error: ' . $e->getMessage());
+            return response()->json([
                 'error' => 'Gagal mengekspor data aset: ' . $e->getMessage()
             ], 500);
         }
@@ -391,7 +392,7 @@ class ExportPdfController extends Controller
             $pdf = Pdf::loadView('exports.asset-tax', [
                 'data' => $data,
                 'filters' => [
-                    'tax_type' => $request->tax_type_id ? \\App\\Models\\MasterTaxType::find($request->tax_type_id)?->name : 'Semua',
+                    'tax_type' => $request->tax_type_id ? \App\Models\MasterTaxType::find($request->tax_type_id)?->name : 'Semua',
                     'tax_year' => $request->tax_year ?? 'Semua',
                     'payment_status' => $request->payment_status ?? 'Semua',
                     'due_date_start' => $request->due_date_start,
@@ -402,8 +403,8 @@ class ExportPdfController extends Controller
             ])->setPaper('a4', 'landscape');
 
             return $pdf->download('laporan-pajak-aset-' . date('Y-m-d') . '.pdf');
-        } catch (\\Exception $e) {
-            \\Log::error('Export Asset Tax PDF Error: ' . $e->getMessage());
+        } catch (\Exception $e) {
+            \Log::error('Export Asset Tax PDF Error: ' . $e->getMessage());
             return response()->json([
                 'error' => 'Gagal mengekspor data pajak: ' . $e->getMessage()
             ], 500);
@@ -469,13 +470,13 @@ class ExportPdfController extends Controller
             ])->setPaper('a4', 'portrait');
 
             return $pdf->download('profil-aset-' . $asset->assets_number . '-' . date('Y-m-d') . '.pdf');
-        } catch (\\Illuminate\\Database\\Eloquent\\ModelNotFoundException $e) {
-            \\Log::error('Asset Profile Not Found: ' . $e->getMessage());
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            \Log::error('Asset Profile Not Found: ' . $e->getMessage());
             return response()->json([
                 'error' => 'Aset tidak ditemukan'
             ], 404);
-        } catch (\\Exception $e) {
-            \\Log::error('Export Asset Profile PDF Error: ' . $e->getMessage());
+        } catch (\Exception $e) {
+            \Log::error('Export Asset Profile PDF Error: ' . $e->getMessage());
             return response()->json([
                 'error' => 'Gagal mengekspor profil aset: ' . $e->getMessage()
             ], 500);
