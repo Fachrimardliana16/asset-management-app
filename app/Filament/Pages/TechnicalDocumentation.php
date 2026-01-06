@@ -4,9 +4,12 @@ namespace App\Filament\Pages;
 
 use Filament\Pages\Page;
 use Filament\Navigation\NavigationItem;
+use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 
 class TechnicalDocumentation extends Page
 {
+    use HasPageShield;
+
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static ?string $navigationGroup = 'Dokumen Aplikasi';
     protected static ?string $navigationLabel = 'Technical Documentation';
@@ -17,6 +20,11 @@ class TechnicalDocumentation extends Page
 
     public static function getNavigationItems(): array
     {
+        // Cek permission dulu sebelum tampilkan navigation
+        if (! static::canAccess()) {
+            return [];
+        }
+
         return [
             NavigationItem::make(static::getNavigationLabel())
                 ->group(static::getNavigationGroup())
@@ -25,10 +33,5 @@ class TechnicalDocumentation extends Page
                 ->url('https://docs.google.com/document/d/19wMNkz7oW29tYP5DRw1B4ab1ty61PpwxMdwotJeCRK0/edit?usp=sharing')
                 ->openUrlInNewTab(),
         ];
-    }
-
-    public static function shouldRegisterNavigation(): bool
-    {
-        return true;
     }
 }

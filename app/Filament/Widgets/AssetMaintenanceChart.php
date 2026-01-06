@@ -3,11 +3,14 @@
 namespace App\Filament\Widgets;
 
 use App\Models\AssetMaintenance;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Carbon;
 
 class AssetMaintenanceChart extends ChartWidget
 {
+    use HasWidgetShield;
+
     protected static ?string $heading = 'Total Pemeliharaan Barang';
     protected static ?int $sort = 4;
     protected static bool $isLazy = true;

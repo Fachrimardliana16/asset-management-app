@@ -4,12 +4,15 @@ namespace App\Filament\Widgets;
 
 use App\Models\Asset;
 use App\Models\AssetTax;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Carbon\Carbon;
 
 class AssetStatsOverview extends BaseWidget
 {
+    use HasWidgetShield;
+
     protected static ?int $sort = 1;
     protected static bool $isLazy = true;
     protected static ?string $pollingInterval = null;

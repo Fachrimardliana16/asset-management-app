@@ -3,11 +3,14 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Asset;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
 
 class AssetByLocationChart extends ChartWidget
 {
+    use HasWidgetShield;
+
     protected static ?string $heading = 'Data Aset Berdasarkan Lokasi';
     protected static ?int $sort = 8;
     protected int | string | array $columnSpan = 1;

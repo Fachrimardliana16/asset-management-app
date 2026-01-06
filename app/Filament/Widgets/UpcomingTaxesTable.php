@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Models\AssetTax;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -10,6 +11,8 @@ use Illuminate\Support\Carbon;
 
 class UpcomingTaxesTable extends BaseWidget
 {
+    use HasWidgetShield;
+
     protected static ?int $sort = 16;
     protected int | string | array $columnSpan = 1;
 

@@ -3,11 +3,14 @@
 namespace App\Filament\Widgets;
 
 use App\Models\AssetPurchase;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Carbon;
 
 class AssetPurchasesChart extends ChartWidget
 {
+    use HasWidgetShield;
+
     protected static ?string $heading = 'Total Pembelian Barang';
     protected static ?int $sort = 3;
     protected static bool $isLazy = true;

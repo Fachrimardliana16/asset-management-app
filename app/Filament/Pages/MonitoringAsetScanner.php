@@ -7,6 +7,7 @@ use App\Models\AssetMaintenance;
 use App\Models\AssetMonitoring;
 use App\Models\AssetMutation;
 use App\Models\MasterAssetsCondition;
+use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
@@ -27,7 +28,7 @@ use Livewire\Attributes\Url;
 
 class MonitoringAsetScanner extends Page implements HasForms
 {
-    use InteractsWithForms;
+    use InteractsWithForms, HasPageShield;
 
     protected static ?string $navigationIcon = 'heroicon-o-eye';
     protected static ?string $navigationGroup = 'Asset';
