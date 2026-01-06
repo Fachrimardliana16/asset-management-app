@@ -3,12 +3,15 @@
 namespace App\Filament\Widgets;
 
 use App\Models\AssetMonitoring;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 
 class MonitoringHistoryTable extends BaseWidget
 {
+    use HasWidgetShield;
+
     protected static ?int $sort = 13;
     protected int | string | array $columnSpan = 1;
     protected static bool $isLazy = true;

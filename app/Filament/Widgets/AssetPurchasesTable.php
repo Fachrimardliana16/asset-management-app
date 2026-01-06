@@ -3,12 +3,15 @@
 namespace App\Filament\Widgets;
 
 use App\Models\AssetPurchase;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 
 class AssetPurchasesTable extends BaseWidget
 {
+    use HasWidgetShield;
+
     protected static ?int $sort = 11;
     protected int | string | array $columnSpan = 1;
     protected static bool $isLazy = true;

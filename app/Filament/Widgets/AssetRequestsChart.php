@@ -3,12 +3,15 @@
 namespace App\Filament\Widgets;
 
 use App\Models\AssetRequests;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Carbon;
 use Filament\Forms\Components\Select;
 
 class AssetRequestsChart extends ChartWidget
 {
+    use HasWidgetShield;
+
     protected static ?string $heading = 'Total Permintaan Barang';
     protected static ?int $sort = 2;
     protected static bool $isLazy = true;

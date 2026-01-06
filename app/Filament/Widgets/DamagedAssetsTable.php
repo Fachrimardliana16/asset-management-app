@@ -3,12 +3,15 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Asset;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 
 class DamagedAssetsTable extends BaseWidget
 {
+    use HasWidgetShield;
+
     protected static ?int $sort = 12;
     protected int | string | array $columnSpan = 1;
 

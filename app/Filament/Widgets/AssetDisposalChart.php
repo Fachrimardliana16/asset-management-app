@@ -3,11 +3,14 @@
 namespace App\Filament\Widgets;
 
 use App\Models\AssetDisposal;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Carbon;
 
 class AssetDisposalChart extends ChartWidget
 {
+    use HasWidgetShield;
+
     protected static ?string $heading = 'Total Penghapusan Barang';
     protected static ?int $sort = 5;
     protected static bool $isLazy = true;

@@ -3,11 +3,14 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Asset;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
 
 class AssetByConditionChart extends ChartWidget
 {
+    use HasWidgetShield;
+
     protected static ?string $heading = 'Data Aset Berdasarkan Kondisi';
     protected static ?int $sort = 6;
     protected int | string | array $columnSpan = 1;

@@ -3,11 +3,14 @@
 namespace App\Filament\Widgets;
 
 use App\Models\AssetMutation;
+use BezhanSalleh\FilamentShield\Traits\HasWidgetShield;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
 
 class AssetByMutationTypeChart extends ChartWidget
 {
+    use HasWidgetShield;
+
     protected static ?string $heading = 'Data Aset Berdasarkan Jenis Mutasi';
     protected static ?int $sort = 9;
     protected int | string | array $columnSpan = 1;
