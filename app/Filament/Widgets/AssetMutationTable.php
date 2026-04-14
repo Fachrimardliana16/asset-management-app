@@ -21,9 +21,11 @@ class AssetMutationTable extends BaseWidget
             ->heading('Mutasi Perpindahan Barang')
             ->query(
                 AssetMutation::query()
+                    ->with(['AssetsMutationemployee', 'AssetsMutationlocation', 'AssetsMutationsubLocation'])
                     ->latest()
                     ->limit(10)
             )
+            ->poll(null)
             ->columns([
                 Tables\Columns\TextColumn::make('mutations_number')
                     ->label('Nomor Mutasi')

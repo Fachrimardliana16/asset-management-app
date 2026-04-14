@@ -25,22 +25,24 @@ class AssetPurchaseResource extends Resource
     protected static ?string $pluralModelLabel = 'Pembelian Barang';
     protected static ?int $navigationSort = 2;
 
-    public static function getNavigationBadge(): ?string
+    private static function getPendingCount(): int
     {
         static $count = null;
         if ($count === null) {
-            $count = static::getModel()::where('purchase_status', 'pending')->count();
+            $count = (int) static::getModel()::where('purchase_status', 'pending')->count();
         }
+        return $count;
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        $count = static::getPendingCount();
         return $count > 0 ? (string) $count : null;
     }
 
     public static function getNavigationBadgeColor(): ?string
     {
-        static $count = null;
-        if ($count === null) {
-            $count = static::getModel()::where('purchase_status', 'pending')->count();
-        }
-        return $count > 0 ? 'warning' : null;
+        return static::getPendingCount() > 0 ? 'warning' : null;
     }
 
     public static function canCreate(): bool

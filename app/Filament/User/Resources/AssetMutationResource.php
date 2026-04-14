@@ -77,29 +77,22 @@ class AssetMutationResource extends Resource
                                         $transactionStatus = MasterAssetsTransactionStatus::find($transactionStatusId);
                                         $isKeluarTransaction = $transactionStatus && $transactionStatus->name === 'Transaksi Keluar';
 
-                                        // Count keluar and masuk for each asset
-                                        $keluarCounts = AssetMutation::query()
-                                            ->select('assets_id', DB::raw('COUNT(*) as count'))
-                                            ->whereHas('AssetsMutationtransactionStatus', fn($q) => $q->where('name', 'Transaksi Keluar'))
-                                            ->groupBy('assets_id')
-                                            ->pluck('count', 'assets_id')
-                                            ->toArray();
+                                        // Single query: get keluar & masuk counts per asset using CASE SUM
+                                        $mutationCounts = DB::table('assets_mutation')
+                                            ->join('master_assets_transaction_status', 'assets_mutation.transaction_status_id', '=', 'master_assets_transaction_status.id')
+                                            ->whereNull('assets_mutation.deleted_at')
+                                            ->selectRaw('assets_mutation.assets_id,
+                                                SUM(CASE WHEN master_assets_transaction_status.name = ? THEN 1 ELSE 0 END) as keluar_count,
+                                                SUM(CASE WHEN master_assets_transaction_status.name = ? THEN 1 ELSE 0 END) as masuk_count',
+                                                ['Transaksi Keluar', 'Transaksi Masuk'])
+                                            ->groupBy('assets_mutation.assets_id')
+                                            ->get()
+                                            ->keyBy('assets_id');
 
-                                        $masukCounts = AssetMutation::query()
-                                            ->select('assets_id', DB::raw('COUNT(*) as count'))
-                                            ->whereHas('AssetsMutationtransactionStatus', fn($q) => $q->where('name', 'Transaksi Masuk'))
-                                            ->groupBy('assets_id')
-                                            ->pluck('count', 'assets_id')
+                                        $assetsStillOut = $mutationCounts
+                                            ->filter(fn($row) => $row->keluar_count > $row->masuk_count)
+                                            ->keys()
                                             ->toArray();
-
-                                        // Assets that are still "out" = keluar count > masuk count
-                                        $assetsStillOut = [];
-                                        foreach ($keluarCounts as $assetId => $keluarCount) {
-                                            $masukCount = $masukCounts[$assetId] ?? 0;
-                                            if ($keluarCount > $masukCount) {
-                                                $assetsStillOut[] = $assetId;
-                                            }
-                                        }
 
                                         $query = Asset::query()
                                             ->where('status_id', function ($query) {

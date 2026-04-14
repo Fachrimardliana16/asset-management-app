@@ -21,14 +21,24 @@ class AssetByLocationChart extends ChartWidget
     protected function getData(): array
     {
         return cache()->remember('chart.asset.by.location', 600, function () {
-            // Get assets with their current location from latest mutation
+            // Use derived table subquery to get latest mutation per asset (avoids N+1 correlated subquery)
+            $latestMutation = DB::table('assets_mutation')
+                ->selectRaw('assets_id, MAX(mutation_date) as latest_date')
+                ->whereNull('deleted_at')
+                ->groupBy('assets_id');
+
             $data = DB::table('assets')
-                ->leftJoin('assets_mutation', function ($join) {
-                    $join->on('assets.id', '=', 'assets_mutation.assets_id')
-                        ->whereRaw('assets_mutation.id = (SELECT id FROM assets_mutation WHERE assets_id = assets.id ORDER BY mutation_date DESC LIMIT 1)');
+                ->leftJoinSub($latestMutation, 'latest_mut', function ($join) {
+                    $join->on('assets.id', '=', 'latest_mut.assets_id');
                 })
-                ->leftJoin('master_assets_locations', 'assets_mutation.location_id', '=', 'master_assets_locations.id')
-                ->select('master_assets_locations.name', DB::raw('count(assets.id) as total'))
+                ->leftJoin('assets_mutation as am', function ($join) {
+                    $join->on('assets.id', '=', 'am.assets_id')
+                        ->on('am.mutation_date', '=', 'latest_mut.latest_date')
+                        ->whereNull('am.deleted_at');
+                })
+                ->leftJoin('master_assets_locations', 'am.location_id', '=', 'master_assets_locations.id')
+                ->whereNull('assets.deleted_at')
+                ->select('master_assets_locations.name', DB::raw('count(DISTINCT assets.id) as total'))
                 ->groupBy('master_assets_locations.name')
                 ->pluck('total', 'name')
                 ->toArray();

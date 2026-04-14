@@ -19,38 +19,40 @@ class AssetByMutationTypeChart extends ChartWidget
     protected static ?string $pollingInterval = null;
     protected function getData(): array
     {
-        try {
-            // Get mutation count by transaction status (jenis mutasi)
-            $data = AssetMutation::join('master_assets_transaction_status', 'assets_mutation.transaction_status_id', '=', 'master_assets_transaction_status.id')
-                ->select('master_assets_transaction_status.name', DB::raw('count(assets_mutation.id) as total'))
-                ->groupBy('master_assets_transaction_status.name', 'master_assets_transaction_status.id')
-                ->pluck('total', 'name')
-                ->toArray();
+        return cache()->remember('chart.asset.by.mutation-type', 600, function () {
+            try {
+                // Get mutation count by transaction status (jenis mutasi)
+                $data = AssetMutation::join('master_assets_transaction_status', 'assets_mutation.transaction_status_id', '=', 'master_assets_transaction_status.id')
+                    ->select('master_assets_transaction_status.name', DB::raw('count(assets_mutation.id) as total'))
+                    ->groupBy('master_assets_transaction_status.name', 'master_assets_transaction_status.id')
+                    ->pluck('total', 'name')
+                    ->toArray();
 
-            // If no mutation data, count total mutations or show placeholder
-            if (empty($data)) {
-                $totalMutations = AssetMutation::count();
-                $data['Belum Ada Mutasi'] = $totalMutations > 0 ? $totalMutations : 1;
+                // If no mutation data, count total mutations or show placeholder
+                if (empty($data)) {
+                    $totalMutations = AssetMutation::count();
+                    $data['Belum Ada Mutasi'] = $totalMutations > 0 ? $totalMutations : 1;
+                }
+            } catch (\Exception $e) {
+                // Fallback jika ada error
+                $data['Belum Ada Mutasi'] = 1;
             }
-        } catch (\Exception $e) {
-            // Fallback jika ada error
-            $data['Belum Ada Mutasi'] = 1;
-        }
 
-        $colors = $this->generateColors(count($data));
+            $colors = $this->generateColors(count($data));
 
-        return [
-            'datasets' => [
-                [
-                    'label' => 'Jumlah Mutasi',
-                    'data' => array_values($data),
-                    'backgroundColor' => $colors['background'],
-                    'borderColor' => $colors['border'],
-                    'borderWidth' => 1,
+            return [
+                'datasets' => [
+                    [
+                        'label' => 'Jumlah Mutasi',
+                        'data' => array_values($data),
+                        'backgroundColor' => $colors['background'],
+                        'borderColor' => $colors['border'],
+                        'borderWidth' => 1,
+                    ],
                 ],
-            ],
-            'labels' => array_keys($data),
-        ];
+                'labels' => array_keys($data),
+            ];
+        });
     }
 
     protected function getType(): string

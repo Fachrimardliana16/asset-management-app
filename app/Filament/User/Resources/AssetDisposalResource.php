@@ -48,16 +48,24 @@ class AssetDisposalResource extends Resource
                             ->schema([
                                 Forms\Components\Select::make('assets_id')
                                     ->label('Pilih Aset')
-                                    ->options(
-                                        Asset::query()
-                                            ->whereHas('assetsStatus', fn($q) => $q->where('name', 'Active'))
-                                            ->get()
-                                            ->mapWithKeys(fn($asset) => [$asset->id => $asset->assets_number . ' - ' . $asset->name])
-                                    )
                                     ->searchable()
-                                    ->preload()
+                                    ->getSearchResultsUsing(function (string $search) {
+                                        return Asset::query()
+                                            ->whereHas('assetsStatus', fn($q) => $q->where('name', 'Active'))
+                                            ->where(function ($q) use ($search) {
+                                                $q->where('assets_number', 'like', "%{$search}%")
+                                                    ->orWhere('name', 'like', "%{$search}%");
+                                            })
+                                            ->limit(50)
+                                            ->get()
+                                            ->mapWithKeys(fn($asset) => [$asset->id => $asset->assets_number . ' - ' . $asset->name]);
+                                    })
+                                    ->getOptionLabelUsing(function ($value) {
+                                        $asset = Asset::find($value);
+                                        return $asset ? $asset->assets_number . ' - ' . $asset->name : $value;
+                                    })
                                     ->required()
-                                    ->helperText('Hanya menampilkan aset dengan status Active. Setelah penghapusan, status akan berubah menjadi Inactive.'),
+                                    ->helperText('Ketik nomor atau nama aset untuk mencari. Hanya menampilkan aset dengan status Active.'),
                                 Forms\Components\Grid::make(2)->schema([
                                     Forms\Components\TextInput::make('book_value')
                                         ->label('Nilai Buku')

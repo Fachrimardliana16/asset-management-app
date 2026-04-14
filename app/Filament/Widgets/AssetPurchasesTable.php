@@ -21,9 +21,11 @@ class AssetPurchasesTable extends BaseWidget
             ->heading('Pembelian Barang')
             ->query(
                 AssetPurchase::query()
+                    ->with(['category'])
                     ->latest()
                     ->limit(10)
             )
+            ->poll(null)
             ->columns([
                 Tables\Columns\TextColumn::make('document_number')
                     ->label('Nomor Dokumen')
