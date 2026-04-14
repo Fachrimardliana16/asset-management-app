@@ -23,6 +23,7 @@ use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Filament\Navigation\MenuItem;
 use Filament\View\PanelsRenderHook;
 
 class AdminPanelProvider extends PanelProvider
@@ -40,6 +41,13 @@ class AdminPanelProvider extends PanelProvider
             ->databaseNotifications()->databaseNotificationsPolling('60s')
             ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
             ->sidebarCollapsibleOnDesktop()
+            ->userMenuItems([
+                MenuItem::make()
+                    ->label('User Panel')
+                    ->icon('heroicon-o-arrow-top-right-on-square')
+                    ->url('/')
+                    ->sort(1),
+            ])
             ->spa() // Enable SPA mode untuk faster page transitions
             ->navigationGroups([
                 NavigationGroup::make('Dokumen Aplikasi'),
