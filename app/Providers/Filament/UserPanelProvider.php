@@ -21,17 +21,17 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Filament\View\PanelsRenderHook;
 
-class AdminPanelProvider extends PanelProvider
+class UserPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
         return $panel
-            ->id('admin')
-            ->path('/admin')
+            ->default()
+            ->id('user')
+            ->path('/')
             ->login(Login::class)
             ->passwordReset(RequestPasswordReset::class)
             ->emailVerification(EmailVerification::class)
@@ -40,30 +40,25 @@ class AdminPanelProvider extends PanelProvider
             ->databaseNotifications()->databaseNotificationsPolling('60s')
             ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
             ->sidebarCollapsibleOnDesktop()
-            ->spa() // Enable SPA mode untuk faster page transitions
+            ->spa()
             ->navigationGroups([
                 NavigationGroup::make('Dokumen Aplikasi'),
-                NavigationGroup::make('Master Pegawai'),
-                NavigationGroup::make('Master'),
-                NavigationGroup::make('Settings'),
-                NavigationGroup::make('Access'),
-                NavigationGroup::make('Activities'),
+                NavigationGroup::make('Asset'),
+                NavigationGroup::make('Master Aset'),
             ])
-            // ->viteTheme('resources/css/filament/admin/theme.css')
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
-            ->resources([
-                config('filament-logger.activity_resource')
+            ->discoverResources(in: app_path('Filament/User/Resources'), for: 'App\\Filament\\User\\Resources')
+            ->pages([
+                Pages\Dashboard::class,
+                \App\Filament\Pages\ManualBook::class,
+                \App\Filament\Pages\TechnicalDocumentation::class,
+                \App\Filament\Pages\MonitoringAsetScanner::class,
             ])
+            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
+            ->widgets([])
             ->renderHook(
-                // PanelsRenderHook::BODY_END,
                 PanelsRenderHook::FOOTER,
                 fn() => view('footer')
             )
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
-            ->pages([
-                Pages\Dashboard::class,
-            ])
-            ->widgets([])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -79,22 +74,6 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->plugins([
-                \BezhanSalleh\FilamentExceptions\FilamentExceptionsPlugin::make(),
-                \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make()
-                    ->gridColumns([
-                        'default' => 2,
-                        'sm' => 1
-                    ])
-                    ->sectionColumnSpan(1)
-                    ->checkboxListColumns([
-                        'default' => 1,
-                        'sm' => 2,
-                        'lg' => 3,
-                    ])
-                    ->resourceCheckboxListColumns([
-                        'default' => 1,
-                        'sm' => 2,
-                    ]),
                 \Jeffgreco13\FilamentBreezy\BreezyCore::make()
                     ->myProfile(
                         shouldRegisterUserMenu: true,
