@@ -23,6 +23,7 @@ use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Filament\Navigation\MenuItem;
 use Filament\View\PanelsRenderHook;
 
 class AdminPanelProvider extends PanelProvider
@@ -30,9 +31,8 @@ class AdminPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         return $panel
-            ->default()
             ->id('admin')
-            ->path('')
+            ->path('/admin')
             ->login(Login::class)
             ->passwordReset(RequestPasswordReset::class)
             ->emailVerification(EmailVerification::class)
@@ -41,12 +41,16 @@ class AdminPanelProvider extends PanelProvider
             ->databaseNotifications()->databaseNotificationsPolling('60s')
             ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
             ->sidebarCollapsibleOnDesktop()
+            ->userMenuItems([
+                MenuItem::make()
+                    ->label('User Panel')
+                    ->icon('heroicon-o-arrow-top-right-on-square')
+                    ->url('/')
+                    ->sort(1),
+            ])
             ->spa() // Enable SPA mode untuk faster page transitions
             ->navigationGroups([
-
                 NavigationGroup::make('Dokumen Aplikasi'),
-                NavigationGroup::make('Asset'),
-                NavigationGroup::make('Master Aset'),
                 NavigationGroup::make('Master Pegawai'),
                 NavigationGroup::make('Master'),
                 NavigationGroup::make('Settings'),
@@ -67,11 +71,7 @@ class AdminPanelProvider extends PanelProvider
             ->pages([
                 Pages\Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
-            ->widgets([
-                // Widgets\AccountWidget::class,
-                // Widgets\FilamentInfoWidget::class,
-            ])
+            ->widgets([])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

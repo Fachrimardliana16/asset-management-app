@@ -21,31 +21,33 @@ class AssetMaintenanceTable extends BaseWidget
             ->heading('Pemeliharaan Barang')
             ->query(
                 AssetMaintenance::query()
+                    ->with(['AssetMaintenance'])
                     ->latest()
                     ->limit(10)
             )
+            ->poll(null)
             ->columns([
-                Tables\Columns\TextColumn::make('assetMaintenance.assets_number')
+                Tables\Columns\TextColumn::make('AssetMaintenance.assets_number')
                     ->label('Nomor Aset')
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('assetMaintenance.name')
+                Tables\Columns\TextColumn::make('AssetMaintenance.name')
                     ->label('Nama Aset')
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('maintenance_type')
+                Tables\Columns\TextColumn::make('service_type')
                     ->label('Jenis Pemeliharaan')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn(?string $state): string => match ($state) {
                         'preventive' => 'success',
                         'corrective' => 'warning',
                         'predictive' => 'info',
                         default => 'gray',
                     }),
 
-                Tables\Columns\TextColumn::make('cost')
+                Tables\Columns\TextColumn::make('service_cost')
                     ->label('Biaya')
                     ->money('IDR')
                     ->sortable(),
@@ -54,16 +56,6 @@ class AssetMaintenanceTable extends BaseWidget
                     ->label('Tanggal Pemeliharaan')
                     ->date('d M Y')
                     ->sortable(),
-
-                Tables\Columns\TextColumn::make('status')
-                    ->label('Status')
-                    ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'completed' => 'success',
-                        'in_progress' => 'warning',
-                        'scheduled' => 'info',
-                        default => 'gray',
-                    }),
             ])
             ->defaultSort('maintenance_date', 'desc');
     }

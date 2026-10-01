@@ -21,9 +21,11 @@ class AssetRequestsTable extends BaseWidget
             ->heading('Permintaan Barang')
             ->query(
                 AssetRequests::query()
+                    ->with(['department', 'requestedBy'])
                     ->latest()
                     ->limit(10)
             )
+            ->poll(null)
             ->columns([
                 Tables\Columns\TextColumn::make('document_number')
                     ->label('Nomor Dokumen')

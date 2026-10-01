@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\EmployeeResource\Pages;
 use App\Models\Employee;
+use App\Models\MasterCabangUnit;
 use App\Models\MasterDepartments;
 use App\Models\MasterSubDepartments;
 use App\Models\MasterEmployeePosition;
@@ -67,6 +68,23 @@ class EmployeeResource extends Resource
                                     ->placeholder('Contoh: Budi Santoso')
                                     ->helperText('Masukkan nama lengkap tanpa gelar'),
 
+                                Forms\Components\Select::make('work_location_type')
+                                    ->label('Lokasi Kerja')
+                                    ->options([
+                                        'pusat'  => 'Kantor Pusat',
+                                        'cabang' => 'Cabang & Unit',
+                                    ])
+                                    ->default('pusat')
+                                    ->required()
+                                    ->live()
+                                    ->afterStateUpdated(function (Forms\Set $set) {
+                                        $set('departments_id', null);
+                                        $set('sub_department_id', null);
+                                        $set('cabang_unit_id', null);
+                                    })
+                                    ->helperText('Pilih apakah pegawai bertugas di Kantor Pusat atau Cabang & Unit'),
+
+                                // Kantor Pusat: Bagian
                                 Forms\Components\Select::make('departments_id')
                                     ->label('Bagian')
                                     ->options(MasterDepartments::pluck('name', 'id'))
@@ -74,10 +92,12 @@ class EmployeeResource extends Resource
                                     ->preload()
                                     ->live()
                                     ->placeholder('Pilih bagian terlebih dahulu')
-                                    ->required()
+                                    ->required(fn (Forms\Get $get) => $get('work_location_type') === 'pusat')
+                                    ->visible(fn (Forms\Get $get) => $get('work_location_type') === 'pusat')
                                     ->afterStateUpdated(fn(Forms\Set $set) => $set('sub_department_id', null))
                                     ->helperText('Pilih bagian unit kerja pegawai'),
 
+                                // Kantor Pusat: Sub Bagian
                                 Forms\Components\Select::make('sub_department_id')
                                     ->label('Sub Bagian')
                                     ->options(function (Forms\Get $get) {
@@ -91,9 +111,21 @@ class EmployeeResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->placeholder('Pilih sub bagian')
+                                    ->visible(fn (Forms\Get $get) => $get('work_location_type') === 'pusat')
                                     ->disabled(fn(Forms\Get $get) => !$get('departments_id'))
                                     ->dehydrated(fn(Forms\Get $get) => filled($get('departments_id')))
                                     ->helperText('Akan muncul setelah memilih Bagian unit kerja'),
+
+                                // Cabang & Unit
+                                Forms\Components\Select::make('cabang_unit_id')
+                                    ->label('Cabang & Unit')
+                                    ->options(MasterCabangUnit::pluck('nama', 'id'))
+                                    ->searchable()
+                                    ->preload()
+                                    ->placeholder('Pilih cabang atau unit')
+                                    ->required(fn (Forms\Get $get) => $get('work_location_type') === 'cabang')
+                                    ->visible(fn (Forms\Get $get) => $get('work_location_type') === 'cabang')
+                                    ->helperText('Pilih cabang atau unit tempat pegawai bertugas'),
                             ]),
                         Forms\Components\Select::make('employee_position_id')
                             ->label('Jabatan')
@@ -242,6 +274,7 @@ class EmployeeResource extends Resource
             ->with([
                 'department',
                 'subDepartment',
+                'cabangUnit',
                 'position',
                 'user',
             ]);
@@ -261,15 +294,37 @@ class EmployeeResource extends Resource
                     ->searchable()
                     ->sortable(),
 
+                Tables\Columns\BadgeColumn::make('work_location_type')
+                    ->label('Lokasi Kerja')
+                    ->formatStateUsing(fn ($state) => match($state) {
+                        'pusat'  => 'Kantor Pusat',
+                        'cabang' => 'Cabang & Unit',
+                        default  => $state,
+                    })
+                    ->color(fn ($state) => match($state) {
+                        'pusat'  => 'info',
+                        'cabang' => 'warning',
+                        default  => 'gray',
+                    })
+                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('department.name')
                     ->label('Bagian')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->placeholder('-'),
 
                 Tables\Columns\TextColumn::make('subDepartment.name')
                     ->label('Sub Bagian')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->placeholder('-'),
+
+                Tables\Columns\TextColumn::make('cabangUnit.nama')
+                    ->label('Cabang & Unit')
+                    ->searchable()
+                    ->sortable()
+                    ->placeholder('-'),
 
                 Tables\Columns\TextColumn::make('position.name')
                     ->label('Jabatan')
@@ -293,6 +348,13 @@ class EmployeeResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('work_location_type')
+                    ->label('Lokasi Kerja')
+                    ->options([
+                        'pusat'  => 'Kantor Pusat',
+                        'cabang' => 'Cabang & Unit',
+                    ]),
+
                 Tables\Filters\SelectFilter::make('departments_id')
                     ->label('Bagian')
                     ->options(MasterDepartments::pluck('name', 'id'))
@@ -302,6 +364,12 @@ class EmployeeResource extends Resource
                 Tables\Filters\SelectFilter::make('sub_department_id')
                     ->label('Sub Bagian')
                     ->options(MasterSubDepartments::pluck('name', 'id'))
+                    ->searchable()
+                    ->preload(),
+
+                Tables\Filters\SelectFilter::make('cabang_unit_id')
+                    ->label('Cabang & Unit')
+                    ->options(MasterCabangUnit::pluck('nama', 'id'))
                     ->searchable()
                     ->preload(),
 

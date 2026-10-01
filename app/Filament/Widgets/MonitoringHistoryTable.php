@@ -21,9 +21,11 @@ class MonitoringHistoryTable extends BaseWidget
             ->heading('Riwayat Monitoring')
             ->query(
                 AssetMonitoring::query()
+                    ->with(['user', 'newCondition'])
                     ->latest()
                     ->limit(10)
             )
+            ->poll(null)
             ->columns([
                 Tables\Columns\TextColumn::make('assets_number')
                     ->label('Nomor Aset')

@@ -48,14 +48,18 @@ class AssetDisposalChart extends ChartWidget
         $data = [];
         $labels = [];
 
+        $counts = cache()->remember('chart.asset-disposals.day.' . now()->format('Y-m-d'), 300, function () {
+            return AssetDisposal::whereDate('created_at', today())
+                ->selectRaw('HOUR(created_at) as hour, COUNT(*) as total')
+                ->groupBy('hour')
+                ->pluck('total', 'hour')
+                ->toArray();
+        });
+
         for ($i = 23; $i >= 0; $i--) {
             $hour = Carbon::now()->subHours($i);
             $labels[] = $hour->format('H:00');
-
-            $startHour = Carbon::today()->addHours($hour->hour);
-            $endHour = $startHour->copy()->addHour();
-
-            $data[] = AssetDisposal::whereBetween('created_at', [$startHour, $endHour])->count();
+            $data[] = $counts[$hour->hour] ?? 0;
         }
 
         return [
@@ -76,10 +80,18 @@ class AssetDisposalChart extends ChartWidget
         $data = [];
         $labels = [];
 
+        $counts = cache()->remember('chart.asset-disposals.week.' . now()->format('Y-m-d'), 300, function () {
+            return AssetDisposal::where('created_at', '>=', Carbon::now()->subDays(6)->startOfDay())
+                ->selectRaw('DATE(created_at) as date, COUNT(*) as total')
+                ->groupBy('date')
+                ->pluck('total', 'date')
+                ->toArray();
+        });
+
         for ($i = 6; $i >= 0; $i--) {
             $day = Carbon::now()->subDays($i);
             $labels[] = $day->format('D');
-            $data[] = AssetDisposal::whereDate('created_at', $day->toDateString())->count();
+            $data[] = $counts[$day->toDateString()] ?? 0;
         }
 
         return [
@@ -101,10 +113,18 @@ class AssetDisposalChart extends ChartWidget
         $labels = [];
         $daysInMonth = Carbon::now()->daysInMonth;
 
+        $counts = cache()->remember('chart.asset-disposals.month.' . now()->format('Y-m'), 300, function () {
+            return AssetDisposal::whereYear('created_at', now()->year)
+                ->whereMonth('created_at', now()->month)
+                ->selectRaw('DAY(created_at) as day, COUNT(*) as total')
+                ->groupBy('day')
+                ->pluck('total', 'day')
+                ->toArray();
+        });
+
         for ($i = 1; $i <= $daysInMonth; $i++) {
             $labels[] = (string)$i;
-            $date = Carbon::now()->startOfMonth()->addDays($i - 1);
-            $data[] = AssetDisposal::whereDate('created_at', $date->toDateString())->count();
+            $data[] = $counts[$i] ?? 0;
         }
 
         return [
@@ -122,14 +142,17 @@ class AssetDisposalChart extends ChartWidget
 
     protected function getDataByYear(): array
     {
-        $data = [];
         $labels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
-        for ($i = 1; $i <= 12; $i++) {
-            $data[] = AssetDisposal::whereYear('created_at', Carbon::now()->year)
-                ->whereMonth('created_at', $i)
-                ->count();
-        }
+        $counts = cache()->remember('chart.asset-disposals.year.' . now()->format('Y'), 600, function () {
+            return AssetDisposal::whereYear('created_at', now()->year)
+                ->selectRaw('MONTH(created_at) as month, COUNT(*) as total')
+                ->groupBy('month')
+                ->pluck('total', 'month')
+                ->toArray();
+        });
+
+        $data = array_map(fn($i) => $counts[$i] ?? 0, range(1, 12));
 
         return [
             'datasets' => [
