@@ -2,52 +2,53 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\MasterBranchOfficeResource\Pages;
-use App\Filament\Resources\MasterBranchOfficeResource\RelationManagers;
-use App\Models\MasterBranchOffice;
+use App\Filament\Resources\MasterCabangUnitResource\Pages;
+use App\Models\MasterCabangUnit;
 use Filament\Forms;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class MasterBranchOfficeResource extends Resource
+class MasterCabangUnitResource extends Resource
 {
-    protected static ?string $model = MasterBranchOffice::class;
+    protected static ?string $model = MasterCabangUnit::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
     protected static ?string $navigationGroup = 'Master';
-    protected static ?string $navigationLabel = 'Cabang';
+    protected static ?string $navigationLabel = 'Cabang & Unit';
+    protected static ?string $modelLabel = 'Cabang & Unit';
+    protected static ?string $pluralModelLabel = 'Cabang & Unit';
     protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Section::make('Form Input Kantor Cabang')
+                Section::make('Form Cabang & Unit')
                     ->schema([
-                        Forms\Components\TextInput::make('code')
+                        Forms\Components\TextInput::make('kode')
                             ->label('Kode')
                             ->required()
+                            ->unique(ignoreRecord: true)
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('name')
-                            ->label('Nama Kantor Cabang')
+                        Forms\Components\TextInput::make('nama')
+                            ->label('Nama')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\Textarea::make('address')
+                        Forms\Components\Textarea::make('alamat')
                             ->label('Alamat')
+                            ->rows(3)
                             ->columnSpanFull(),
-                        Forms\Components\TextInput::make('phone')
-                            ->label('Nomor Telp')
-                            ->tel()
-                            ->maxLength(255),
+                        Forms\Components\Textarea::make('keterangan')
+                            ->label('Keterangan')
+                            ->rows(3)
+                            ->columnSpanFull(),
                         Forms\Components\Hidden::make('users_id')
                             ->default(auth()->id()),
                     ])
+                    ->columns(2),
             ]);
     }
 
@@ -59,18 +60,22 @@ class MasterBranchOfficeResource extends Resource
                     ->label('ID')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('code')
+                Tables\Columns\TextColumn::make('kode')
                     ->label('Kode')
+                    ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('name')
+                Tables\Columns\TextColumn::make('nama')
                     ->label('Nama')
+                    ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('address')
+                Tables\Columns\TextColumn::make('alamat')
                     ->label('Alamat')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('phone')
-                    ->label('Telepon')
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('keterangan')
+                    ->label('Keterangan')
+                    ->searchable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -84,9 +89,9 @@ class MasterBranchOfficeResource extends Resource
                 //
             ])
             ->actions([
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
-                Tables\Actions\ViewAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -105,9 +110,10 @@ class MasterBranchOfficeResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListMasterBranchOffices::route('/'),
-            //'create' => Pages\CreateMasterBranchOffice::route('/create'),
-            //'edit' => Pages\EditMasterBranchOffice::route('/{record}/edit'),
+            'index'  => Pages\ListMasterCabangUnits::route('/'),
+            'create' => Pages\CreateMasterCabangUnit::route('/create'),
+            'edit'   => Pages\EditMasterCabangUnit::route('/{record}/edit'),
+            'view'   => Pages\ViewMasterCabangUnit::route('/{record}'),
         ];
     }
 }

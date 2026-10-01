@@ -14,10 +14,13 @@ class AssetRequests extends Model
 
     protected $fillable = [
         'document_number',
+        'request_origin_type',
         'date',
         'total_items',
         'total_quantity',
         'department_id',
+        'sub_department_id',
+        'cabang_unit_id',
         'requested_by',
         'desc',
         'kepala_sub_bagian',
@@ -47,6 +50,26 @@ class AssetRequests extends Model
     ];
 
     /**
+     * Booted method for model events
+     */
+    protected static function booted()
+    {
+        static::saving(function ($model) {
+            // Evaluasi status_request: true jika 5 layer approval terpenuhi
+            if ($model->kepala_sub_bagian &&
+                $model->kepala_bagian_umum &&
+                $model->kepala_bagian_keuangan &&
+                $model->direktur_umum &&
+                $model->direktur_utama) {
+                
+                $model->status_request = true;
+            } else {
+                $model->status_request = false;
+            }
+        });
+    }
+
+    /**
      * Relasi ke Items (Detail)
      */
     public function items()
@@ -63,6 +86,14 @@ class AssetRequests extends Model
     }
 
     /**
+     * Relasi ke Sub Department
+     */
+    public function subDepartment()
+    {
+        return $this->belongsTo(MasterSubDepartments::class, 'sub_department_id');
+    }
+
+    /**
      * Relasi ke Employee Pemohon
      */
     public function requestedBy()
@@ -76,6 +107,14 @@ class AssetRequests extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'users_id');
+    }
+
+    /**
+     * Relasi ke Cabang & Unit
+     */
+    public function cabangUnit()
+    {
+        return $this->belongsTo(MasterCabangUnit::class, 'cabang_unit_id');
     }
 
     /**

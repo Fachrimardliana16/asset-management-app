@@ -4,6 +4,8 @@ namespace App\Filament\User\Resources;
 
 use App\Filament\User\Resources\AssetRequestsResource\Pages;
 use App\Models\AssetRequests;
+use App\Models\MasterCabangUnit;
+use App\Models\MasterSubDepartments;
 use Filament\Forms;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
@@ -55,10 +57,10 @@ class AssetRequestsResource extends Resource
         return parent::getEloquentQuery()
             ->with([
                 'items.category',
-                'items.location',
-                'items.subLocation',
                 'items.purchases',
                 'department',
+                'subDepartment',
+                'cabangUnit',
                 'requestedBy',
                 'user'
             ]);
@@ -90,30 +92,133 @@ class AssetRequestsResource extends Resource
                                         'required' => 'Tanggal permintaan wajib diisi.',
                                     ]),
 
-                                Forms\Components\Select::make('department_id')
-                                    ->relationship('department', 'name')
-                                    ->label('Departemen')
-                                    ->searchable()
-                                    ->preload()
+                                Forms\Components\Radio::make('request_origin_type')
+                                    ->label('Asal Permintaan')
+                                    ->options([
+                                        'pusat'  => 'Kantor Pusat',
+                                        'cabang' => 'Cabang & Unit',
+                                    ])
+                                    ->default('pusat')
+                                    ->inline()
                                     ->required()
                                     ->live()
-                                    ->afterStateUpdated(fn($set) => $set('requested_by', null)),
+                                    ->afterStateUpdated(function (Forms\Set $set) {
+                                        $set('department_id', null);
+                                        $set('sub_department_id', null);
+                                        $set('cabang_unit_id', null);
+                                        $set('requested_by_pusat', null);
+                                        $set('requested_by_cabang', null);
+                                        $set('requested_by', null);
+                                    })
+                                    ->helperText('Pilih apakah permintaan dari Kantor Pusat atau Cabang & Unit')
+                                    ->columnSpanFull(),
 
-                                Forms\Components\Select::make('requested_by')
+                                // === KANTOR PUSAT ===
+                                Forms\Components\Select::make('department_id')
+                                    ->relationship('department', 'name')
+                                    ->label('Bagian / Departemen')
+                                    ->searchable()
+                                    ->preload()
+                                    ->required(fn (Get $get) => $get('request_origin_type') === 'pusat')
+                                    ->visible(fn (Get $get) => $get('request_origin_type') === 'pusat')
+                                    ->live()
+                                    ->afterStateUpdated(function(Forms\Set $set) {
+                                        $set('sub_department_id', null);
+                                        $set('requested_by_pusat', null);
+                                    })
+                                    ->helperText('Pilih bagian/departemen pemohon'),
+
+                                Forms\Components\Select::make('sub_department_id')
+                                    ->label('Sub Bagian')
+                                    ->options(function (Get $get) {
+                                        $departmentId = $get('department_id');
+                                        if (!$departmentId) {
+                                            return [];
+                                        }
+                                        return MasterSubDepartments::where('departments_id', $departmentId)
+                                            ->pluck('name', 'id');
+                                    })
+                                    ->searchable()
+                                    ->preload()
+                                    ->visible(fn (Get $get) => $get('request_origin_type') === 'pusat')
+                                    ->disabled(fn(Get $get) => !$get('department_id'))
+                                    ->live()
+                                    ->afterStateUpdated(fn(Forms\Set $set) => $set('requested_by_pusat', null))
+                                    ->helperText('Pilih sub bagian asal permintaan'),
+
+                                Forms\Components\Select::make('requested_by_pusat')
                                     ->label('Pemohon')
-                                    ->options(fn(Get $get) => 
-                                        $get('department_id')
-                                            ? \App\Models\Employee::where('departments_id', $get('department_id'))
-                                                ->orderBy('name')
-                                                ->get()
-                                                ->pluck('name', 'id')
-                                            : []
-                                    )
+                                    ->options(function (Get $get) {
+                                        $deptId = $get('department_id');
+                                        $subDeptId = $get('sub_department_id');
+                                        
+                                        if (!$deptId) return [];
+                                        
+                                        $query = \App\Models\Employee::where('departments_id', $deptId)
+                                            ->where('work_location_type', 'pusat');
+                                            
+                                        if ($subDeptId) {
+                                            $query->where('sub_department_id', $subDeptId);
+                                        }
+                                            
+                                        return $query->orderBy('name')->pluck('name', 'id');
+                                    })
                                     ->searchable()
                                     ->preload(false)
-                                    ->required()
-                                    ->placeholder('Pilih departemen terlebih dahulu...'),
+                                    ->required(fn (Get $get) => $get('request_origin_type') === 'pusat')
+                                    ->visible(fn (Get $get) => $get('request_origin_type') === 'pusat')
+                                    ->disabled(fn (Get $get) => $get('request_origin_type') === 'pusat' && !$get('department_id'))
+                                    ->placeholder('Pilih bagian terlebih dahulu...')
+                                    ->dehydrated(false)
+                                    ->afterStateHydrated(function(Forms\Components\Select $component, $state, $record) {
+                                        if ($record && $record->request_origin_type === 'pusat') {
+                                            $component->state($record->requested_by);
+                                        }
+                                    }),
+
+                                // === CABANG & UNIT ===
+                                Forms\Components\Select::make('cabang_unit_id')
+                                    ->label('Cabang & Unit')
+                                    ->options(MasterCabangUnit::pluck('nama', 'id'))
+                                    ->searchable()
+                                    ->preload()
+                                    ->required(fn (Get $get) => $get('request_origin_type') === 'cabang')
+                                    ->visible(fn (Get $get) => $get('request_origin_type') === 'cabang')
+                                    ->live()
+                                    ->afterStateUpdated(fn(Forms\Set $set) => $set('requested_by_cabang', null))
+                                    ->helperText('Pilih cabang atau unit asal permintaan'),
+
+                                Forms\Components\Select::make('requested_by_cabang')
+                                    ->label('Pemohon')
+                                    ->options(function (Get $get) {
+                                        $cabangId = $get('cabang_unit_id');
+                                        if (!$cabangId) return [];
+                                        return \App\Models\Employee::where('cabang_unit_id', $cabangId)
+                                            ->where('work_location_type', 'cabang')
+                                            ->orderBy('name')
+                                            ->pluck('name', 'id');
+                                    })
+                                    ->searchable()
+                                    ->preload(false)
+                                    ->required(fn (Get $get) => $get('request_origin_type') === 'cabang')
+                                    ->visible(fn (Get $get) => $get('request_origin_type') === 'cabang')
+                                    ->disabled(fn (Get $get) => !$get('cabang_unit_id'))
+                                    ->placeholder('Pilih cabang terlebih dahulu...')
+                                    ->dehydrated(false)
+                                    ->afterStateHydrated(function(Forms\Components\Select $component, $state, $record) {
+                                        if ($record && $record->request_origin_type === 'cabang') {
+                                            $component->state($record->requested_by);
+                                        }
+                                    }),
                             ]),
+
+                        Forms\Components\Hidden::make('requested_by')
+                            ->dehydrateStateUsing(function ($state, Forms\Get $get) {
+                                if ($get('request_origin_type') === 'pusat') {
+                                    return $get('requested_by_pusat');
+                                }
+                                return $get('requested_by_cabang');
+                            }),
 
                         Forms\Components\Textarea::make('desc')
                             ->label('Keterangan Umum')
@@ -150,33 +255,6 @@ class AssetRequestsResource extends Resource
                                             ->minValue(1)
                                             ->default(1)
                                             ->suffix(' unit'),
-                                    ]),
-
-                                Grid::make(2)
-                                    ->schema([
-                                        Forms\Components\Select::make('location_id')
-                                            ->label('Lokasi')
-                                            ->options(\App\Models\MasterAssetsLocation::pluck('name', 'id'))
-                                            ->searchable()
-                                            ->preload()
-                                            ->required()
-                                            ->live()
-                                            ->afterStateUpdated(fn($set) => $set('sub_location_id', null)),
-
-                                        Forms\Components\Select::make('sub_location_id')
-                                            ->label('Sub Lokasi')
-                                            ->options(
-                                                fn(Get $get) =>
-                                                $get('location_id')
-                                                    ? \App\Models\MasterAssetsSubLocation::where('location_id', $get('location_id'))
-                                                    ->orderBy('name')
-                                                    ->pluck('name', 'id')
-                                                    : []
-                                            )
-                                            ->searchable()
-                                            ->preload(false)
-                                            ->live()
-                                            ->placeholder('Pilih lokasi dulu...'),
                                     ]),
 
                                 Forms\Components\TextInput::make('purpose')
@@ -318,6 +396,21 @@ class AssetRequestsResource extends Resource
                     ->date('d M Y')
                     ->sortable(),
 
+                // Asal Permintaan
+                Tables\Columns\BadgeColumn::make('request_origin_type')
+                    ->label('Asal')
+                    ->formatStateUsing(fn ($state) => match($state) {
+                        'pusat'  => 'Kantor Pusat',
+                        'cabang' => 'Cabang & Unit',
+                        default  => $state,
+                    })
+                    ->color(fn ($state) => match($state) {
+                        'pusat'  => 'info',
+                        'cabang' => 'warning',
+                        default  => 'gray',
+                    })
+                    ->sortable(),
+
                 // Total Items & Quantity
                 Tables\Columns\TextColumn::make('total_items')
                     ->label('Jml Jenis')
@@ -329,10 +422,24 @@ class AssetRequestsResource extends Resource
                     ->alignCenter()
                     ->sortable(),
 
-                // Department
+                // Department (Pusat)
                 Tables\Columns\TextColumn::make('department.name')
-                    ->label('Departemen')
+                    ->label('Bagian')
                     ->sortable()
+                    ->placeholder('-')
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('subDepartment.name')
+                    ->label('Sub Bagian')
+                    ->sortable()
+                    ->placeholder('-')
+                    ->toggleable(),
+
+                // Cabang & Unit
+                Tables\Columns\TextColumn::make('cabangUnit.nama')
+                    ->label('Cabang & Unit')
+                    ->sortable()
+                    ->placeholder('-')
                     ->toggleable(),
 
                 // Pemohon
@@ -378,9 +485,28 @@ class AssetRequestsResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
+                Tables\Filters\SelectFilter::make('request_origin_type')
+                    ->label('Asal Permintaan')
+                    ->options([
+                        'pusat'  => 'Kantor Pusat',
+                        'cabang' => 'Cabang & Unit',
+                    ]),
+
                 Tables\Filters\SelectFilter::make('department_id')
                     ->relationship('department', 'name')
-                    ->label('Departemen')
+                    ->label('Bagian')
+                    ->searchable()
+                    ->preload(),
+
+                Tables\Filters\SelectFilter::make('sub_department_id')
+                    ->relationship('subDepartment', 'name')
+                    ->label('Sub Bagian')
+                    ->searchable()
+                    ->preload(),
+
+                Tables\Filters\SelectFilter::make('cabang_unit_id')
+                    ->label('Cabang & Unit')
+                    ->options(MasterCabangUnit::pluck('nama', 'id'))
                     ->searchable()
                     ->preload(),
                 Tables\Filters\SelectFilter::make('purchase_status')

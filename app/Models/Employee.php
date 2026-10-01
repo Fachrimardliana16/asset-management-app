@@ -19,8 +19,10 @@ class Employee extends Model
     protected $fillable = [
         'nippam',
         'name',
+        'work_location_type',
         'departments_id',
         'sub_department_id',
+        'cabang_unit_id',
         'employee_position_id',
         'place_birth',
         'date_birth',
@@ -42,7 +44,7 @@ class Employee extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['nippam', 'name', 'departments_id', 'sub_department_id', 'employee_position_id', 'phone_number', 'email'])
+            ->logOnly(['nippam', 'name', 'work_location_type', 'departments_id', 'sub_department_id', 'cabang_unit_id', 'employee_position_id', 'phone_number', 'email'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs();
     }
@@ -77,5 +79,13 @@ class Employee extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'users_id');
+    }
+
+    /**
+     * Get the cabang & unit
+     */
+    public function cabangUnit(): BelongsTo
+    {
+        return $this->belongsTo(MasterCabangUnit::class, 'cabang_unit_id');
     }
 }
