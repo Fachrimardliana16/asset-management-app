@@ -87,23 +87,23 @@ class EditAssetRequests extends EditRecord
             if (isset($itemData['id'])) {
                 // Update existing item
                 $this->record->items()->find($itemData['id'])->update([
-                    'asset_name' => $itemData['asset_name'],
-                    'category_id' => $itemData['category_id'],
-                    'quantity' => $itemData['quantity'],
-                    'location_id' => $itemData['location_id'],
+                    'asset_name' => $itemData['asset_name'] ?? null,
+                    'category_id' => $itemData['category_id'] ?? null,
+                    'quantity' => $itemData['quantity'] ?? 1,
+                    'location_id' => $itemData['location_id'] ?? null,
                     'sub_location_id' => $itemData['sub_location_id'] ?? null,
-                    'purpose' => $itemData['purpose'],
+                    'purpose' => $itemData['purpose'] ?? null,
                     'notes' => $itemData['notes'] ?? null,
                 ]);
             } else {
                 // Create new item
                 $this->record->items()->create([
-                    'asset_name' => $itemData['asset_name'],
-                    'category_id' => $itemData['category_id'],
-                    'quantity' => $itemData['quantity'],
-                    'location_id' => $itemData['location_id'],
+                    'asset_name' => $itemData['asset_name'] ?? null,
+                    'category_id' => $itemData['category_id'] ?? null,
+                    'quantity' => $itemData['quantity'] ?? 1,
+                    'location_id' => $itemData['location_id'] ?? null,
                     'sub_location_id' => $itemData['sub_location_id'] ?? null,
-                    'purpose' => $itemData['purpose'],
+                    'purpose' => $itemData['purpose'] ?? null,
                     'notes' => $itemData['notes'] ?? null,
                 ]);
             }

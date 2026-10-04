@@ -263,6 +263,35 @@ class AssetRequestsResource extends Resource
                                     ->maxLength(255)
                                     ->placeholder('Contoh: Untuk staff baru'),
 
+                                Grid::make(2)
+                                    ->schema([
+                                        Forms\Components\Select::make('location_id')
+                                            ->label('Lokasi')
+                                            ->options(\App\Models\MasterAssetsLocation::pluck('name', 'id'))
+                                            ->searchable()
+                                            ->preload()
+                                            ->required()
+                                            ->live()
+                                            ->afterStateUpdated(fn(Forms\Set $set) => $set('sub_location_id', null)),
+
+                                        Forms\Components\Select::make('sub_location_id')
+                                            ->label('Sub Lokasi')
+                                            ->options(function (Get $get) {
+                                                $locationId = $get('location_id');
+
+                                                if (!$locationId) {
+                                                    return [];
+                                                }
+
+                                                return \App\Models\MasterAssetsSubLocation::where('location_id', $locationId)
+                                                    ->pluck('name', 'id');
+                                            })
+                                            ->searchable()
+                                            ->preload()
+                                            ->required()
+                                            ->disabled(fn(Get $get) => !$get('location_id')),
+                                    ]),
+
                                 Forms\Components\Textarea::make('notes')
                                     ->label('Catatan Item')
                                     ->rows(2)
