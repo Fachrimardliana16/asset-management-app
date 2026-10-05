@@ -149,16 +149,16 @@ class AssetRequestsResource extends Resource
                                     ->options(function (Get $get) {
                                         $deptId = $get('department_id');
                                         $subDeptId = $get('sub_department_id');
-                                        
+
                                         if (!$deptId) return [];
-                                        
+
                                         $query = \App\Models\Employee::where('departments_id', $deptId)
                                             ->where('work_location_type', 'pusat');
-                                            
+
                                         if ($subDeptId) {
                                             $query->where('sub_department_id', $subDeptId);
                                         }
-                                            
+
                                         return $query->orderBy('name')->pluck('name', 'id');
                                     })
                                     ->searchable()

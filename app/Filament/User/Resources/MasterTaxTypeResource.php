@@ -39,13 +39,13 @@ class MasterTaxTypeResource extends Resource
                             ->required()
                             ->maxLength(255)
                             ->placeholder('Contoh: PKB, BPKB, PBB, IMB'),
-                        
+
                         Forms\Components\TextInput::make('code')
                             ->label('Kode Pajak')
                             ->maxLength(255)
                             ->unique(ignoreRecord: true)
                             ->placeholder('Contoh: PKB, PBB'),
-                        
+
                         Forms\Components\Select::make('asset_category_id')
                             ->label('Kategori Aset')
                             ->relationship('assetCategory', 'name')
@@ -53,7 +53,7 @@ class MasterTaxTypeResource extends Resource
                             ->preload()
                             ->placeholder('Pilih kategori aset yang terkait')
                             ->helperText('Kategori aset yang memerlukan jenis pajak ini'),
-                        
+
                         Forms\Components\Textarea::make('description')
                             ->label('Deskripsi')
                             ->rows(3)
@@ -74,7 +74,7 @@ class MasterTaxTypeResource extends Resource
                             ->required()
                             ->live()
                             ->helperText('Frekuensi pembayaran pajak'),
-                        
+
                         Forms\Components\TextInput::make('period_months')
                             ->label('Periode (Bulan)')
                             ->numeric()
@@ -83,7 +83,7 @@ class MasterTaxTypeResource extends Resource
                             ->visible(fn (Forms\Get $get) => $get('period_type') === 'custom')
                             ->required(fn (Forms\Get $get) => $get('period_type') === 'custom')
                             ->helperText('Jumlah bulan untuk periode custom'),
-                        
+
                         Forms\Components\TextInput::make('reminder_days')
                             ->label('Reminder (Hari)')
                             ->numeric()
@@ -102,7 +102,7 @@ class MasterTaxTypeResource extends Resource
                             ->default(false)
                             ->live()
                             ->helperText('Aktifkan jika pajak ini memiliki denda keterlambatan'),
-                        
+
                         Forms\Components\Select::make('penalty_type')
                             ->label('Tipe Denda')
                             ->options([
@@ -113,9 +113,9 @@ class MasterTaxTypeResource extends Resource
                             ->required(fn (Forms\Get $get) => $get('has_penalty'))
                             ->visible(fn (Forms\Get $get) => $get('has_penalty'))
                             ->live(),
-                        
+
                         Forms\Components\TextInput::make('penalty_percentage')
-                            ->label(fn (Forms\Get $get) => 
+                            ->label(fn (Forms\Get $get) =>
                                 $get('penalty_type') === 'fixed' ? 'Nominal Denda (Rp)' : 'Persentase Denda (%)'
                             )
                             ->numeric()
@@ -123,18 +123,18 @@ class MasterTaxTypeResource extends Resource
                             ->step(0.01)
                             ->required(fn (Forms\Get $get) => $get('has_penalty'))
                             ->visible(fn (Forms\Get $get) => $get('has_penalty'))
-                            ->prefix(fn (Forms\Get $get) => 
+                            ->prefix(fn (Forms\Get $get) =>
                                 $get('penalty_type') === 'fixed' ? 'Rp' : null
                             )
-                            ->suffix(fn (Forms\Get $get) => 
+                            ->suffix(fn (Forms\Get $get) =>
                                 $get('penalty_type') === 'percentage' ? '%' : null
                             )
-                            ->helperText(fn (Forms\Get $get) => 
-                                $get('penalty_type') === 'fixed' 
-                                    ? 'Nominal denda tetap' 
+                            ->helperText(fn (Forms\Get $get) =>
+                                $get('penalty_type') === 'fixed'
+                                    ? 'Nominal denda tetap'
                                     : 'Persentase dari nilai pajak'
                             ),
-                        
+
                         Forms\Components\Select::make('penalty_period')
                             ->label('Periode Perhitungan')
                             ->options([
@@ -166,13 +166,13 @@ class MasterTaxTypeResource extends Resource
                     ->label('Nama Jenis Pajak')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('code')
                     ->label('Kode')
                     ->searchable()
                     ->sortable()
                     ->toggleable(),
-                
+
                 Tables\Columns\TextColumn::make('assetCategory.name')
                     ->label('Kategori Aset')
                     ->searchable()
@@ -180,12 +180,12 @@ class MasterTaxTypeResource extends Resource
                     ->badge()
                     ->color('info')
                     ->default('-'),
-                
+
                 Tables\Columns\TextColumn::make('period_label')
                     ->label('Periode')
                     ->badge()
                     ->color('warning'),
-                
+
                 Tables\Columns\IconColumn::make('has_penalty')
                     ->label('Denda')
                     ->boolean()
@@ -194,24 +194,24 @@ class MasterTaxTypeResource extends Resource
                     ->trueColor('danger')
                     ->falseColor('success')
                     ->alignCenter(),
-                
+
                 Tables\Columns\TextColumn::make('penalty_percentage')
                     ->label('Nilai Denda')
-                    ->formatStateUsing(fn ($state, $record) => 
-                        $record->has_penalty 
-                            ? ($record->penalty_type === 'fixed' 
-                                ? 'Rp ' . number_format($state, 0, ',', '.') 
+                    ->formatStateUsing(fn ($state, $record) =>
+                        $record->has_penalty
+                            ? ($record->penalty_type === 'fixed'
+                                ? 'Rp ' . number_format($state, 0, ',', '.')
                                 : $state . '%')
                             : '-'
                     )
                     ->toggleable(),
-                
+
                 Tables\Columns\TextColumn::make('reminder_days')
                     ->label('Reminder')
                     ->suffix(' hari')
                     ->alignCenter()
                     ->toggleable(),
-                
+
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Status')
                     ->boolean()
@@ -220,7 +220,7 @@ class MasterTaxTypeResource extends Resource
                     ->trueColor('success')
                     ->falseColor('danger')
                     ->alignCenter(),
-                
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Dibuat')
                     ->dateTime('d M Y H:i')
@@ -233,7 +233,7 @@ class MasterTaxTypeResource extends Resource
                     ->relationship('assetCategory', 'name')
                     ->multiple()
                     ->preload(),
-                
+
                 Tables\Filters\SelectFilter::make('period_type')
                     ->label('Tipe Periode')
                     ->options([
@@ -241,13 +241,13 @@ class MasterTaxTypeResource extends Resource
                         '5yearly' => '5 Tahunan',
                         'custom' => 'Custom',
                     ]),
-                
+
                 Tables\Filters\TernaryFilter::make('has_penalty')
                     ->label('Memiliki Denda')
                     ->placeholder('Semua')
                     ->trueLabel('Dengan Denda')
                     ->falseLabel('Tanpa Denda'),
-                
+
                 Tables\Filters\TernaryFilter::make('is_active')
                     ->label('Status')
                     ->placeholder('Semua Status')
