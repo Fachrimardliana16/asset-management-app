@@ -34,11 +34,9 @@ class AssetRequestsResource extends Resource
 
     private static function getPendingCount(): int
     {
-        static $count = null;
-        if ($count === null) {
-            $count = (int) static::getModel()::where('purchase_status', 'pending')->count();
-        }
-        return $count;
+        return (int) cache()->remember('nav.badge.asset_requests.pending', 60, fn() =>
+            static::getModel()::where('purchase_status', 'pending')->count()
+        );
     }
 
     public static function getNavigationBadge(): ?string

@@ -410,13 +410,21 @@ class AssetTaxResource extends Resource
         ];
     }
 
+    private static function getOverdueCount(): int
+    {
+        return (int) cache()->remember('nav.badge.asset_tax.overdue', 60, fn() =>
+            static::getModel()::where('payment_status', 'overdue')->count()
+        );
+    }
+
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::where('payment_status', 'overdue')->count();
+        $count = static::getOverdueCount();
+        return $count > 0 ? (string) $count : null;
     }
 
     public static function getNavigationBadgeColor(): string|array|null
     {
-        return static::getModel()::where('payment_status', 'overdue')->count() > 0 ? 'danger' : 'primary';
+        return static::getOverdueCount() > 0 ? 'danger' : 'primary';
     }
 }

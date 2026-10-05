@@ -22,6 +22,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Filament\Navigation\MenuItem;
 use Filament\View\PanelsRenderHook;
 
 class UserPanelProvider extends PanelProvider
@@ -40,6 +41,14 @@ class UserPanelProvider extends PanelProvider
             ->databaseNotifications()->databaseNotificationsPolling('60s')
             ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
             ->sidebarCollapsibleOnDesktop()
+            ->userMenuItems([
+                MenuItem::make()
+                    ->label('Admin Panel')
+                    ->icon('heroicon-o-cog-8-tooth')
+                    ->url('/admin')
+                    ->sort(1)
+                    ->visible(fn() => auth()->user()?->hasRole('super_admin')),
+            ])
             ->spa()
             ->navigationGroups([
                 NavigationGroup::make('Dokumen Aplikasi'),

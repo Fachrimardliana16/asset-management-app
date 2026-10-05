@@ -285,6 +285,8 @@ class MasterTaxTypeResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::active()->count();
+        return (string) cache()->remember('nav.badge.tax_type.active', 300, fn() =>
+            static::getModel()::active()->count()
+        );
     }
 }
