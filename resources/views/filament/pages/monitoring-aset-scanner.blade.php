@@ -64,11 +64,11 @@
                         {{-- Manual Input --}}
                         <div class="flex-1 space-y-4">
                             <div>
-                                <label class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                <label for="barcode-manual-input" class="block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                                     Input Manual Nomor Aset
                                 </label>
                                 <div class="flex gap-2">
-                                    <input type="text" wire:model="barcodeInput" placeholder="Masukkan nomor aset..."
+                                    <input id="barcode-manual-input" type="text" wire:model="barcodeInput" placeholder="Masukkan nomor aset..."
                                         class="flex-1 border-gray-300 rounded-lg shadow-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-primary-500 focus:ring-primary-500"
                                         @keydown.enter="$wire.searchAsset()">
                                     <button wire:click="searchAsset" type="button"
