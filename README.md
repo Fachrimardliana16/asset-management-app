@@ -30,6 +30,10 @@
 - **Riwayat Monitoring** - Catatan history monitoring kondisi aset
 - **Alert System** - Peringatan untuk aset yang butuh perhatian (nilai buku habis, kondisi rusak, dll)
 
+### 🧩 Catatan Deploy QR Code Label
+- Template print stiker aset menggunakan **QR PNG base64** agar hasil render konsisten di local dan shared hosting.
+- Jika QR hasil print terlalu rapat/sulit dipindai di production, gunakan `APP_URL` yang ringkas (domain pendek) agar payload URL QR tidak terlalu panjang.
+
 ### 🔄 Mutasi Aset
 - **Mutasi Keluar** - Aset dari gudang ke individu/pegawai
 - **Mutasi Masuk** - Aset dari individu kembali ke gudang
