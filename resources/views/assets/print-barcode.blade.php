@@ -230,26 +230,15 @@
             padding: 0;
         }
 
-        /* Support untuk QR code dalam format div/table dari DNS2D */
-        .qr-code div,
-        .qr-code table {
+        .qr-code img {
+            width: 100%;
+            height: 100%;
             display: block !important;
-            visibility: visible !important;
             margin: 0 !important;
             padding: 0 !important;
-            width: 18mm !important;
-            height: 18mm !important;
-        }
-
-        .qr-code svg {
-            width: 18mm !important;
-            height: 18mm !important;
-            max-width: 18mm !important;
-            max-height: 18mm !important;
-            display: block !important;
-            visibility: visible !important;
-            margin: 0 !important;
-            padding: 0 !important;
+            object-fit: contain;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
         }
 
         .qr-label {
@@ -352,17 +341,11 @@
                 print-color-adjust: exact !important;
             }
 
-            /* QR Code harus tetap visible saat print */
-            .qr-code,
-            .qr-code * {
-                display: block !important;
-                visibility: visible !important;
+            .qr-code img {
+                width: 100% !important;
+                height: 100% !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
-            }
-
-            .qr-code div {
-                background-color: inherit !important;
             }
         }
     </style>
@@ -417,7 +400,8 @@
                     <!-- QR CODE DINAMIS DARI DATABASE -->
                     <div class="qr-section">
                         <div class="qr-code">
-                            {!! DNS2D::getBarcodeSVG(route('asset.scan', $asset->id), 'QRCODE', 2, 2) !!}
+                            <img src="data:image/png;base64,{{ DNS2D::getBarcodePNG(route('asset.scan', $asset->id), 'QRCODE', 8, 8) }}"
+                                alt="QR Code {{ $asset->assets_number }}">
                         </div>
                         <div class="qr-label">Scan untuk<br>Monitoring</div>
                     </div>
